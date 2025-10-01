@@ -19,7 +19,7 @@ import {
   UploadedFile,
   UseInterceptors
 } from "@nestjs/common";
-import { ApiCookieAuth, ApiQuery, ApiTags, ApiBody } from "@nestjs/swagger";
+import { ApiCookieAuth, ApiQuery, ApiTags, ApiBody, ApiConsumes } from "@nestjs/swagger";
 import type { Response } from "express";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { SettingsService } from "./settings.service";
@@ -79,6 +79,18 @@ export class SettingsController {
     
     @Patch("upload-profile-picture")
     @UseInterceptors(FileInterceptor("file"))
+    @ApiConsumes("multipart/form-data")
+    @ApiBody({
+    schema: {
+        type: "object",
+        properties: {
+        file: {
+            type: "string",
+            format: "binary",
+        },
+        },
+    },
+    })
     async uploadProfilePicture(
     @Req() req: UserRequest,
     @Res() res: Response,
