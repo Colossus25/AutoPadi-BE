@@ -11,8 +11,9 @@ import {
   Res,
   UseGuards,
   UsePipes,
+  Query
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import type { Response } from "express";
 import {
   CreateAccountDto,
@@ -24,10 +25,12 @@ import { AuthService } from "../services/auth.service";
 import { UserLoginGuard } from "../user-guards";
 import {
   CreateAccountValidation,
+  UserTypeValidation,
   ForgotPasswordValidation,
   LoginValidation,
   ResetPasswordValidation,
 } from "../validations";
+import { UserType } from "../entities/user.entity";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -72,14 +75,21 @@ export class AuthController {
 
   @UsePipes(new JoiValidationPipe(CreateAccountValidation))
   @Post("create-account")
+  @ApiQuery({
+    name: "userType",
+    enum: UserType,
+    required: true,
+  })
   async createAccount(
     @Body() createAccountDto: CreateAccountDto,
+    @Query(new JoiValidationPipe(UserTypeValidation)) query: { userType: UserType },
     @Res({ passthrough: true }) res: Response
   ) {
+    const { userType } = query;
     res.clearCookie(_AUTH_COOKIE_NAME_);
 
     const { data, message } =
-      await this.authService.createAccount(createAccountDto);
+      await this.authService.createAccount(createAccountDto, userType);
     const { user, token } = data;
 
     if (!token || !user) {

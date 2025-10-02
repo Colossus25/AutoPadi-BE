@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitialMigration1758633225234 implements MigrationInterface {
-    name = 'InitialMigration1758633225234'
+export class InitialMigration1759420209015 implements MigrationInterface {
+    name = 'InitialMigration1759420209015'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "super_permissions" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "group" character varying, "description" character varying, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_50544e1df2fac15c62b0fce3c05" PRIMARY KEY ("id"))`);
@@ -10,7 +10,8 @@ export class InitialMigration1758633225234 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "superadmins" ("id" SERIAL NOT NULL, "first_name" character varying, "last_name" character varying, "email" character varying NOT NULL, "password" character varying, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_c6e0845de38355152105dfe94a2" UNIQUE ("email"), CONSTRAINT "PK_783604fbb1962a34417ed1c76eb" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "super_group" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "description" character varying, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "parentId" integer, CONSTRAINT "PK_2948b64bd7dedb693d4a87ea6ea" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "notifications" ("id" SERIAL NOT NULL, "message" character varying NOT NULL, "tag" character varying NOT NULL, "metadata" json, "deleted_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "User_id" integer, CONSTRAINT "PK_6a72c3c0f683f6462415e653c3a" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "users" ("id" SERIAL NOT NULL, "first_name" character varying, "last_name" character varying, "email" character varying NOT NULL, "password" character varying NOT NULL, "phone" character varying, "address" character varying, "landmark" character varying, "city" character varying, "state" character varying, "profile_picture" text, "remember_token" text, "email_verified_at" TIMESTAMP, "deleted_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TYPE "public"."users_user_type_enum" AS ENUM('buyer', 'vendor', 'service provider', 'driver', 'driver employer')`);
+        await queryRunner.query(`CREATE TABLE "users" ("id" SERIAL NOT NULL, "first_name" character varying, "last_name" character varying, "email" character varying NOT NULL, "password" character varying NOT NULL, "user_type" "public"."users_user_type_enum" NOT NULL, "phone" character varying, "address" character varying, "landmark" character varying, "city" character varying, "state" character varying, "profile_picture" text, "remember_token" text, "email_verified_at" TIMESTAMP, "deleted_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "notification_jobs" ("id" SERIAL NOT NULL, "tag" character varying NOT NULL, "queued" boolean NOT NULL DEFAULT false, "queue_able" boolean NOT NULL DEFAULT false, "action_note" text, "payload" json, "deleted_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" integer, CONSTRAINT "PK_a9069c02b999ccf3a03b5e7bda9" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."personal_access_token_token_type_enum" AS ENUM('otp', 'accessCodeReset', 'rememberToken', 'others')`);
         await queryRunner.query(`CREATE TABLE "personal_access_token" ("id" SERIAL NOT NULL, "token" character varying NOT NULL, "token_type" "public"."personal_access_token_token_type_enum" NOT NULL DEFAULT 'otp', "due_at" TIMESTAMP NOT NULL, "deleted_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" integer NOT NULL, CONSTRAINT "UQ_6bea53a3ebc17e91ccc4526c6f8" UNIQUE ("token"), CONSTRAINT "PK_4f29b258be0b657a3f81b75f0b7" PRIMARY KEY ("id"))`);
@@ -81,6 +82,7 @@ export class InitialMigration1758633225234 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "public"."personal_access_token_token_type_enum"`);
         await queryRunner.query(`DROP TABLE "notification_jobs"`);
         await queryRunner.query(`DROP TABLE "users"`);
+        await queryRunner.query(`DROP TYPE "public"."users_user_type_enum"`);
         await queryRunner.query(`DROP TABLE "notifications"`);
         await queryRunner.query(`DROP TABLE "super_group"`);
         await queryRunner.query(`DROP TABLE "superadmins"`);

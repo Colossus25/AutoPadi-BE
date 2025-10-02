@@ -1,4 +1,5 @@
 import * as Joi from "joi";
+import { UserType } from "../entities/user.entity";
 
 export const CreateAccountValidation = Joi.object().keys({
   email: Joi.string().email().required().label("Email"),
@@ -13,6 +14,13 @@ export const CreateAccountValidation = Joi.object().keys({
       "any.only": "password does not match",
     })
     .label("Confirm password"),
+});
+
+export const UserTypeValidation = Joi.object().keys({
+  userType: Joi.string()
+    .valid(...Object.values(UserType))
+    .required()
+    .label("User type"),
 });
 
 export const ChangeUserPasswordValidation = Joi.object().keys({

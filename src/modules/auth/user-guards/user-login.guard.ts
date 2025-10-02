@@ -22,6 +22,7 @@ export class UserLoginGuard implements CanActivate {
         'first_name',
         'last_name',
         'email',
+        'user_type',
         'phone',
         'address',
         'landmark',

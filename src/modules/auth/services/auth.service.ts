@@ -29,7 +29,7 @@ import {
   ResetPasswordDto,
 } from "../dto";
 import { CacheService } from "@/modules/global/cache-container/cache-container.service";
-import { User } from "../entities/user.entity";
+import { User, UserType } from "../entities/user.entity";
 
 @Injectable()
 export class AuthService extends BaseService {
@@ -61,7 +61,7 @@ export class AuthService extends BaseService {
     return { user, token };
   }
 
-  async createAccount(createAccountDto: CreateAccountDto) {
+  async createAccount(createAccountDto: CreateAccountDto, userType: UserType) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
 
@@ -83,8 +83,9 @@ export class AuthService extends BaseService {
       const rememberToken = generateNumericCode();
       const user = await queryRunner.manager.save(User, {
         email: email.toLowerCase(),
-        remember_token: rememberToken,
         password: hashResourceSync(createAccountDto.password),
+        user_type: userType,
+        remember_token: rememberToken,
       });
 
       await queryRunner.commitTransaction();
@@ -95,6 +96,7 @@ export class AuthService extends BaseService {
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
+        user_type: user.user_type,
         phone: user.phone,
         address: user.address,
         landmark: user.landmark,
