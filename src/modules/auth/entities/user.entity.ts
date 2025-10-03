@@ -11,14 +11,6 @@ import {
 } from "typeorm";
 import { Notification } from "@/modules/notifications/entities/notification.entity";
 
-export enum UserType {
-  BUYER = "buyer",
-  VENDOR = "vendor",
-  SERVICE_PROVIDER = "service provider",
-  DRIVER = "driver",
-  DRIVER_EMPLOYER = "driver employer",
-}
-
 @Entity({ name: "users" })
 export class User {
   @PrimaryGeneratedColumn()
@@ -36,11 +28,20 @@ export class User {
   @Column({ select: false })
   password?: string;
 
-  @Column({ type: "enum", enum: UserType })
-  user_type: UserType;
+  @Column({ nullable: true })
+  user_type?: string;
 
   @Column({ nullable: true })
   phone: string;
+
+  @Column({ nullable: true })
+  id_type?: string;
+
+  @Column({ nullable: true })
+  id_number?: string;
+
+  @Column({ type: "text", nullable: true })
+  id_image?: string | null;
 
   @Column({ nullable: true })
   address?: string;
@@ -53,6 +54,9 @@ export class User {
 
   @Column({ nullable: true })
   state?: string;
+
+  @Column({ type: "text", nullable: true })
+  proof_of_address_image?: string | null;
 
   @Column({ nullable: true, type: "text" })
   profile_picture: string | null;

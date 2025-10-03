@@ -8,8 +8,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, In } from "typeorm";
 import { User } from "../auth/entities/user.entity";
 import { 
-  EditFullnameDto, 
-  EditContactInfoDto, 
   EditPasswordDto, 
   EditProfileDto,
 } from "./dto";
@@ -44,14 +42,15 @@ export class SettingsService {
     return { user };
   }
 
-  async editProfile(editProfileDto: EditProfileDto, req: UserRequest) {
-    const { firstName, lastName, email, phone, address, landmark, city, state } = editProfileDto;
+  async editProfile(
+    editProfileDto: EditProfileDto,
+    req: UserRequest,
+    files?: { id_image?: Express.Multer.File[]; proof_of_address_image?: Express.Multer.File[] }
+  ) {
+    const { firstName, lastName, email, phone, id_type, id_number, address, landmark, city, state  } = editProfileDto;
     const userId = req.user.id;
 
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
-
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new BadRequestException("User not found.");
     }
@@ -60,14 +59,30 @@ export class SettingsService {
     user.last_name = lastName;
     user.email = email;
     user.phone = phone;
+    user.id_type = id_type;
+    user.id_number = id_number;
     user.address = address;
     user.landmark = landmark;
     user.city = city;
     user.state = state;
 
-    await this.userRepository.save(user);
+    if (files) {
+      if (files.id_image?.[0]) {
+        const upload = await this.cloudinaryService.upload([files.id_image[0]]);
+        if (!upload?.[0]?.secure_url) throw new BadRequestException("Failed to upload ID image.");
+        user.id_image = upload[0].secure_url;
+      }
 
-    return { message: "Profile updated successfully." };
+      if (files.proof_of_address_image?.[0]) {
+        const upload = await this.cloudinaryService.upload([files.proof_of_address_image[0]]);
+        if (!upload?.[0]?.secure_url) throw new BadRequestException("Failed to upload proof of address image.");
+        user.proof_of_address_image = upload[0].secure_url;
+      }
+    }
+
+    const data = await this.userRepository.save(user);
+
+    return { message: "Profile updated successfully.", data };
   }
 
   async updatePassword(updatePasswordDto: EditPasswordDto, req: UserRequest) {

@@ -30,7 +30,6 @@ import {
   LoginValidation,
   ResetPasswordValidation,
 } from "../validations";
-import { UserType } from "../entities/user.entity";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -47,7 +46,7 @@ export class AuthController {
   ) {
     res.clearCookie(_AUTH_COOKIE_NAME_);
 
-    const { token, user } = await this.authService.login(
+    const { message, user, token, } = await this.authService.login(
       loginDto,
       req
     );
@@ -66,9 +65,10 @@ export class AuthController {
     );
 
     return {
+      message,
       data: {
         user,
-        token
+        token,
       },
     };
   }
@@ -77,19 +77,18 @@ export class AuthController {
   @Post("create-account")
   @ApiQuery({
     name: "userType",
-    enum: UserType,
+    enum: ["buyer", "vendor", "service provider", "driver", "driver employer"],
     required: true,
   })
   async createAccount(
     @Body() createAccountDto: CreateAccountDto,
-    @Query(new JoiValidationPipe(UserTypeValidation)) query: { userType: UserType },
+    @Query(new JoiValidationPipe(UserTypeValidation)) query: { userType: string },
     @Res({ passthrough: true }) res: Response
   ) {
     const { userType } = query;
     res.clearCookie(_AUTH_COOKIE_NAME_);
 
-    const { data, message } =
-      await this.authService.createAccount(createAccountDto, userType);
+    const { message, data } = await this.authService.createAccount(createAccountDto, userType);
     const { user, token } = data;
 
     if (!token || !user) {

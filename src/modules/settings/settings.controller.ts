@@ -17,22 +17,19 @@ import {
   UseGuards,
   UsePipes,
   UploadedFile,
-  UseInterceptors
+  UseInterceptors,
+  UploadedFiles
 } from "@nestjs/common";
 import { ApiCookieAuth, ApiQuery, ApiTags, ApiBody, ApiConsumes } from "@nestjs/swagger";
 import type { Response } from "express";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor, FileFieldsInterceptor } from "@nestjs/platform-express";
 import { SettingsService } from "./settings.service";
 import { 
-    EditFullnameValidation, 
-    EditContactInfoValidation, 
     EditPasswordValidation, 
     EditProfileValidation,
 } from "./validations/settings.validation";
 import { 
     EditPasswordDto, 
-    EditContactInfoDto, 
-    EditFullnameDto, 
     EditProfileDto,
 } from "./dto";
 
@@ -54,15 +51,22 @@ export class SettingsController {
         successResponse(res, { data });
     }
 
-    @UsePipes(new JoiValidationPipe(EditProfileValidation))
     @Patch("edit-profile")
+    @UseInterceptors(
+    FileFieldsInterceptor([
+        { name: "id_image", maxCount: 1 },
+        { name: "proof_of_address_image", maxCount: 1 }
+    ])
+    )
+    @ApiConsumes("multipart/form-data")
     async editProfile(
-        @Req() req: UserRequest,
-        @Res() res: Response,
-        @Body() editProfileDto: EditProfileDto,
+    @Req() req: UserRequest,
+    @Res() res: Response,
+    @Body(new JoiValidationPipe(EditProfileValidation)) editProfileDto: EditProfileDto,
+    @UploadedFiles() files: { id_image?: Express.Multer.File[]; proof_of_address_image?: Express.Multer.File[] }
     ) {
-    const data = await this.settingsService.editProfile(editProfileDto, req);
-        successResponse(res, { data });
+    const {message, data} = await this.settingsService.editProfile(editProfileDto, req, files);
+    successResponse(res, { message, data });
     }
 
     @UsePipes(new JoiValidationPipe(EditPasswordValidation))

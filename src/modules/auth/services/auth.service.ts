@@ -29,7 +29,7 @@ import {
   ResetPasswordDto,
 } from "../dto";
 import { CacheService } from "@/modules/global/cache-container/cache-container.service";
-import { User, UserType } from "../entities/user.entity";
+import { User } from "../entities/user.entity";
 
 @Injectable()
 export class AuthService extends BaseService {
@@ -58,10 +58,10 @@ export class AuthService extends BaseService {
     if (userData) userData = user;
     const token = this.jwtService.sign({ ...user });
 
-    return { user, token };
+    return { message: "Login successful.", user, token };
   }
 
-  async createAccount(createAccountDto: CreateAccountDto, userType: UserType) {
+  async createAccount(createAccountDto: CreateAccountDto, userType: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
 
@@ -98,10 +98,14 @@ export class AuthService extends BaseService {
         email: user.email,
         user_type: user.user_type,
         phone: user.phone,
+        id_type: user.id_type,
+        id_number: user.id_number,
+        id_image: user.id_image,
         address: user.address,
         landmark: user.landmark,
         city: user.city,
         state: user.state,
+        proof_of_address_image: user.proof_of_address_image,
         profile_picture: user.profile_picture,
         remember_token: user.remember_token,
       };

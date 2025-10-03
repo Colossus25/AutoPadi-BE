@@ -1,15 +1,5 @@
 import * as Joi from "joi";
 
-export const EditFullnameValidation = Joi.object().keys({
-  firstName: Joi.string().required().label("First name"),
-  lastName: Joi.string().required().label("Last name"),
-});
-
-export const EditContactInfoValidation = Joi.object().keys({
-  phone: Joi.string().required().label("Phone number"),
-  email: Joi.string().email().optional().allow(null).label("Email address"),
-});
-
 export const EditPasswordValidation = Joi.object().keys({
   currentPassword: Joi.string().required().label("Current password"),
   newPassword: Joi.string().required().label("New password"),
@@ -24,6 +14,13 @@ export const EditProfileValidation = Joi.object().keys({
   lastName: Joi.string().optional().label("Last name"),
   email: Joi.string().email().optional().allow(null).label("Email address"),
   phone: Joi.string().optional().label("Phone number"),
+  id_type: Joi.string()
+    .valid("NIN", "NIS", "FRSC", "INEC")
+    .optional()
+    .messages({
+      "any.only": "ID type must be one of nin, nis, frsc, or inec",
+  }),
+  id_number: Joi.string().optional(),
   address: Joi.string().optional().label("Address"),
   landmark: Joi.string().optional().label("Landmark"),
   city: Joi.string().optional().label("City"),
