@@ -55,16 +55,30 @@ export class SettingsService {
       throw new BadRequestException("User not found.");
     }
 
-    user.first_name = firstName;
-    user.last_name = lastName;
-    user.email = email;
-    user.phone = phone;
-    user.id_type = id_type;
-    user.id_number = id_number;
-    user.address = address;
-    user.landmark = landmark;
-    user.city = city;
-    user.state = state;
+    const updatableFields: (keyof EditProfileDto)[] = [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "id_type",
+      "id_number",
+      "address",
+      "landmark",
+      "city",
+      "state",
+    ];
+
+  for (const field of updatableFields) {
+    const value = editProfileDto[field];
+    if (value !== undefined && value !== null && value !== "") {
+      // Map DTO keys (camelCase) to entity keys (snake_case)
+      const entityKey = field
+        .replace("firstName", "first_name")
+        .replace("lastName", "last_name");
+
+      (user as any)[entityKey] = value;
+    }
+  }
 
     if (files) {
       if (files.id_image?.[0]) {

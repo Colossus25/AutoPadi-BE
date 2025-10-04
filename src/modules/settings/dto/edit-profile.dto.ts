@@ -13,7 +13,7 @@ export class EditProfileDto {
   @ApiProperty({ required: false, example: "+234-987-6543-210" })
   phone: string;
 
-  @ApiProperty({ required: false, example: "NIN" })
+  @ApiProperty({ required: false, example: "National ID" })
   id_type?: string;
 
   @ApiProperty({ required: false, example: "1234567890" })
