@@ -17,7 +17,7 @@ export const CreateAccountValidation = Joi.object().keys({
 
 export const UserTypeValidation = Joi.object({
   userType: Joi.string()
-    .valid("buyer", "vendor", "service provider", "driver", "driver employer")
+    .valid("buyer", "auto dealer", "service provider", "driver", "driver employer")
     .default("buyer") 
     .label("User type"),
 });

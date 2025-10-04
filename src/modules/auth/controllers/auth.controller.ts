@@ -77,7 +77,7 @@ export class AuthController {
   @Post("create-account")
   @ApiQuery({
     name: "userType",
-    enum: ["buyer", "vendor", "service provider", "driver", "driver employer"],
+    enum: ["buyer", "auto dealer", "service provider", "driver", "driver employer"],
     required: true,
   })
   async createAccount(

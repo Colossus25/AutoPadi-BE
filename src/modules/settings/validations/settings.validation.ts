@@ -14,13 +14,8 @@ export const EditProfileValidation = Joi.object().keys({
   lastName: Joi.string().optional().label("Last name"),
   email: Joi.string().email().optional().allow(null).label("Email address"),
   phone: Joi.string().optional().label("Phone number"),
-  id_type: Joi.string()
-    .valid("NIN", "NIS", "FRSC", "INEC")
-    .optional()
-    .messages({
-      "any.only": "ID type must be one of nin, nis, frsc, or inec",
-  }),
-  id_number: Joi.string().optional(),
+  id_type: Joi.string().optional().label("ID Type"),
+  id_number: Joi.string().optional().label("ID Number"),
   address: Joi.string().optional().label("Address"),
   landmark: Joi.string().optional().label("Landmark"),
   city: Joi.string().optional().label("City"),

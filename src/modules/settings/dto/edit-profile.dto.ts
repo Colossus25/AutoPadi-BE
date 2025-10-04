@@ -1,16 +1,16 @@
 import { ApiProperty } from "@nestjs/swagger";
 
 export class EditProfileDto {
-  @ApiProperty({ example: "John" })
+  @ApiProperty({ required: false, example: "John" })
   firstName: string;
 
-  @ApiProperty({ example: "Smith" })
+  @ApiProperty({ required: false, example: "Smith" })
   lastName: string;
 
-  @ApiProperty({ example: "johnsmith@address.com" })
+  @ApiProperty({ required: false, example: "johnsmith@address.com" })
   email: string;
 
-  @ApiProperty({ example: "+234-987-6543-210" })
+  @ApiProperty({ required: false, example: "+234-987-6543-210" })
   phone: string;
 
   @ApiProperty({ required: false, example: "NIN" })
@@ -22,16 +22,16 @@ export class EditProfileDto {
   @ApiProperty({ type: "string", format: "binary", required: false })
   id_image?: Express.Multer.File;
 
-  @ApiProperty({ example: "1, ABC Street, GRA - Ikeja, Lagos." })
+  @ApiProperty({ required: false, example: "1, ABC Street, GRA - Ikeja, Lagos." })
   address: string;
 
-  @ApiProperty({ example: "GRA" })
+  @ApiProperty({ required: false, example: "GRA" })
   landmark: string;
 
-  @ApiProperty({ example: "Ikeja" })
+  @ApiProperty({ required: false, example: "Ikeja" })
   city: string;
 
-  @ApiProperty({ example: "Lagos" })
+  @ApiProperty({ required: false, example: "Lagos" })
   state: string;
 
   @ApiProperty({ type: "string", format: "binary", required: false })
