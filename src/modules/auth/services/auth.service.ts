@@ -56,7 +56,7 @@ export class AuthService extends BaseService {
     let userData = getUserCookieData(user.email, req);
 
     if (userData) userData = user;
-    const token = this.jwtService.sign({ ...user });
+    const token = this.jwtService.sign({ ...user }); 
 
     return { message: "Login successful.", user, token };
   }

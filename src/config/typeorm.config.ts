@@ -8,10 +8,10 @@ export const dataSource = {
   username: dbConfig.DB_USERNAME,
   password: dbConfig.DB_PASSWORD,
   database: dbConfig.DB_NAME,
-//   ssl: {
-//     rejectUnauthorized: false,
-//   },
-  // url: dbConfig.DB_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  url: dbConfig.DB_URL,
   synchronize: false,
   timezone: "UTC+1", //'+01:00'
   logging: false,

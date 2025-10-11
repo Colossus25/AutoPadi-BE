@@ -49,7 +49,7 @@ export class SuperadminService {
 
     // Create default SuperAdmin if not exists
     async createDefaultSuperAdmin() {
-        const existing = await this.superAdminRepository.findOne({ where: { email: 'superadmin@gmail.com' } });
+        const existing = await this.superAdminRepository.findOne({ where: { email: 'superadmin@address.com' } });
         if (existing) return existing;
 
         // Create permissions
@@ -85,28 +85,31 @@ export class SuperadminService {
         return result
     }
 
-    async login(superLoginDto: SuperLoginDto, req: SuperAdminRequest ) {
-        const { user } = req
-        const verified = await verifyHash(superLoginDto.password, user.password)
-        if (!verified) throw new NotAcceptableException("Incorrect password, please try again")
-        
+    async login(superLoginDto: SuperLoginDto, req: SuperAdminRequest) {
         const superAdmin = await this.superAdminRepository.findOne({
             where: { email: superLoginDto.email },
             relations: ['super_role', 'super_role.super_permission']
-        })
+        });
 
-        if (!superAdmin) throw new NotAcceptableException("Invalid Credentials")
+        if (!superAdmin) {
+            throw new NotAcceptableException("Invalid credentials");
+        }
+
+        const verified = await verifyHash(superLoginDto.password, superAdmin.password);
+        if (!verified) {
+            throw new NotAcceptableException("Incorrect password, please try again");
+        }
 
         const token = this.jwtService.sign({
             id: superAdmin.id,
             email: superAdmin.email
-        })
+        });
 
         return {
             message: "Login successful",
             superAdmin,
             token
-        }
+        };
     }
 
     async createAdmin(createAdminDto: CreateAdminDto) {
@@ -143,7 +146,5 @@ export class SuperadminService {
         const result = await this.superAdminRepository.save(superAdmin)
 
         return result
-
-
     }
 }

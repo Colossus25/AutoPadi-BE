@@ -21,6 +21,7 @@ import {
   AuthModule,
 } from "./modules";
 import { ConfigModuleSchema } from "./validations";
+import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { SuperadminModule } from './modules/superadmin/superadmin.module';
 
@@ -58,6 +59,7 @@ import { SuperadminModule } from './modules/superadmin/superadmin.module';
     AuthModule,
     PersonalAccessTokenModule,
     PublicModule,
+    DashboardModule,
     SettingsModule,
     CloudinaryModule,
     CronModule,

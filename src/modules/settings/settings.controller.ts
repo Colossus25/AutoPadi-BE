@@ -80,28 +80,27 @@ export class SettingsController {
         successResponse(res, { data });
     }
     
-    
     @Patch("upload-profile-picture")
     @UseInterceptors(FileInterceptor("file"))
     @ApiConsumes("multipart/form-data")
     @ApiBody({
-    schema: {
-        type: "object",
-        properties: {
-        file: {
-            type: "string",
-            format: "binary",
+        schema: {
+            type: "object",
+            properties: {
+            file: {
+                type: "string",
+                format: "binary",
+            },
+            },
         },
-        },
-    },
     })
     async uploadProfilePicture(
     @Req() req: UserRequest,
     @Res() res: Response,
     @UploadedFile() file: Express.Multer.File,
     ) {
-    const data = await this.settingsService.uploadProfilePicture(file, req);
-    successResponse(res, { data });
+        const data = await this.settingsService.uploadProfilePicture(file, req);
+        successResponse(res, { data });
     }
 
     @Delete("delete-profile-picture")
@@ -109,7 +108,7 @@ export class SettingsController {
     @Req() req: UserRequest,
     @Res() res: Response,
     ) {
-    const data = await this.settingsService.deleteProfilePicture(req);
-    successResponse(res, { data });
+        const data = await this.settingsService.deleteProfilePicture(req);
+        successResponse(res, { data });
     }
 }

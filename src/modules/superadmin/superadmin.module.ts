@@ -7,6 +7,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SuperAdmin } from './entities/super-admin.entity';
 import { SuperGroupService } from './service/group.service';
 import { SuperGroup } from './entities/super-group.entity';
+import { Banner } from './entities/banner.entity';
+import { BannerService } from './service/banner.service';
+import { BannerController } from './controllers/banner.controller';
 
 
 @Module({
@@ -15,11 +18,12 @@ import { SuperGroup } from './entities/super-group.entity';
       SuperAdmin,
       SuperRoles,
       SuperPermissions,
-      SuperGroup
+      SuperGroup,
+      Banner,
     ])
   ],
-  providers: [SuperadminService, SuperGroupService],
-  controllers: [SuperadminController],
+  providers: [SuperadminService, SuperGroupService, BannerService],
+  controllers: [SuperadminController, BannerController],
   exports: [SuperadminService]
 })
 export class SuperadminModule {}

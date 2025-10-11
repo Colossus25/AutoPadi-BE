@@ -20,3 +20,14 @@ export const MAILJETTemplates = {
 };
 
 export const SUPERADMIN_AUTH_COOKIE = 'SUPERADMIN_AUTH';
+
+export const DASHBOARD_CATEGORIES = [
+  { id: 1, name: 'Automobiles' },
+  { id: 2, name: 'Accessories' },
+  { id: 3, name: 'Parts' },
+  { id: 4, name: 'Services' },
+  { id: 5, name: 'Jobs' },
+  { id: 6, name: 'Hire Driver' },
+  { id: 7, name: 'Rent Vehicle' },
+  { id: 8, name: 'Swap Vehicle' },
+];
