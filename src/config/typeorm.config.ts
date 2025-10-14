@@ -11,7 +11,7 @@ export const dataSource = {
   ssl: {
     rejectUnauthorized: false,
   },
-  url: dbConfig.DB_URL,
+  // url: dbConfig.DB_URL,
   synchronize: false,
   timezone: "UTC+1", //'+01:00'
   logging: false,
