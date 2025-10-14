@@ -24,6 +24,7 @@ import { ConfigModuleSchema } from "./validations";
 import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { SuperadminModule } from './modules/superadmin/superadmin.module';
+import { AutodealerModule } from "./modules/autodealer/autodealer.module";
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SuperadminModule } from './modules/superadmin/superadmin.module';
     PersonalAccessTokenModule,
     PublicModule,
     DashboardModule,
+    AutodealerModule,
     SettingsModule,
     CloudinaryModule,
     CronModule,
