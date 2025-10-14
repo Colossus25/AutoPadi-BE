@@ -6,6 +6,7 @@ import { CreateProductDto } from '../dto/create-product.dto';
 import { User } from '@/modules/auth/entities/user.entity';
 import { ForbiddenException } from '@nestjs/common';
 import { Store } from '../entities/store.entity';
+import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
 
 @Injectable()
 export class ProductService {
@@ -41,15 +42,30 @@ export class ProductService {
         return await this.productRepository.save(product);
     }
 
-    async getAllProducts(user: User) {
+    async getAllProducts(user: User, pagination: PaginationDto) {
+        const { page = 1, limit = 100 } = pagination;
+        const skip = (page - 1) * limit;
+
         if (user.user_type !== 'auto dealer') {
             throw new ForbiddenException('Only auto dealers can view products');
         }
 
-        return await this.productRepository.find({
+        const [ products, total ] = await this.productRepository.findAndCount({
             where: { created_by: { id: user.id } },
             order: { created_at: 'DESC' },
+            skip,
+            take: limit,
         });
+
+        return {
+             meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+            products,
+        }
     }
 
     async getProductById(id: number, user: User) {

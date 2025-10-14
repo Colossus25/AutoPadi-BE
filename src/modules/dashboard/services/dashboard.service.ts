@@ -7,6 +7,7 @@ import { DASHBOARD_CATEGORIES } from '@/constants';
 import { SearchDto } from '../dto/search.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
 
 @Injectable()
 export class DashboardService {
@@ -18,11 +19,16 @@ export class DashboardService {
     private readonly productRepository: Repository<Product>,
   ) {}
 
-    async search(filters: SearchDto) {
+    async search(filters: SearchDto, pagination: PaginationDto) {
       const { q, price_min, price_max, year_min, year_max, make, colour, fuel, listing_type, category, type } = filters;
+
+      const { page = 1, limit = 100 } = pagination;
+      const skip = (page - 1) * limit;
 
       let stores: Store[] = [];
       let products: Product[] = [];
+      let totalStores = 0;
+      let totalProducts = 0;
 
       // --- SEARCH PRODUCTS ---
       if (!type || type === 'product' || type === 'all') {
@@ -53,7 +59,7 @@ export class DashboardService {
         if (year_min) productQuery.andWhere('product.year::numeric >= :year_min', { year_min });
         if (year_max) productQuery.andWhere('product.year::numeric <= :year_max', { year_max });
 
-        products = await productQuery.orderBy('product.created_at', 'DESC').getMany();
+        [ products, totalProducts ] = await productQuery.orderBy('product.created_at', 'DESC').skip(skip).take(limit).getManyAndCount();
       }
 
       // --- SEARCH STORES ---
@@ -81,46 +87,102 @@ export class DashboardService {
         if (year_min) storeQuery.andWhere('product.year::numeric >= :year_min', { year_min });
         if (year_max) storeQuery.andWhere('product.year::numeric <= :year_max', { year_max });
 
-        stores = await storeQuery.orderBy('store.created_at', 'DESC').getMany();
+        [ stores, totalStores ] = await storeQuery.orderBy('store.created_at', 'DESC').skip(skip).take(limit).getManyAndCount();
       }
 
-      return { products, stores };
+        return {
+          meta: {
+            page,
+            limit,
+            totalProducts,
+            totalStores,
+            total: totalProducts + totalStores,
+            totalPages: Math.ceil((totalProducts + totalStores) / limit),
+          },
+          products,
+          stores,
+        };
     }
 
-    async getCategory(categoryId: number) {
+    async getCategory(categoryId: number, pagination: PaginationDto) {
       const category = DASHBOARD_CATEGORIES.find(c => c.id === +categoryId);
-      if (!category) {
-        throw new NotFoundException('Category not found');
-      }
+      if (!category) throw new NotFoundException('Category not found');
 
-      let stores: Store[] = [];
+      const { page = 1, limit = 100 } = pagination;
+      const skip = (page - 1) * limit;
+
       let products: Product[] = [];
+      let stores: Store[] = [];
+      let totalProducts = 0;
+      let totalStores = 0;
 
       if (category.name.includes('Swap')) {
-        products = await this.productRepository.find({
-          where: [
-            { listing_type: 'Swap' },
-            { listing_type: 'Both' },
-          ],
-        });
-      } else {
-        [products, stores] = await Promise.all([
-          this.productRepository.find({ where: { category: category.name } }),
-          this.storeRepository.find({ where: { category: category.name } }),
-        ]);
+        const [swapProducts, count] = await this.productRepository
+          .createQueryBuilder('product')
+          .where('product.listing_type IN (:...types)', { types: ['Swap', 'Both'] })
+          .skip(skip)
+          .take(limit)
+          .getManyAndCount();
+
+        products = swapProducts;
+        totalProducts = count;
+      } 
+      else {
+        const [categoryProducts, productCount] = await this.productRepository
+          .createQueryBuilder('product')
+          .where('product.category = :category', { category: category.name })
+          .skip(skip)
+          .take(limit)
+          .getManyAndCount();
+
+        const [categoryStores, storeCount] = await this.storeRepository
+          .createQueryBuilder('store')
+          .where('store.category = :category', { category: category.name })
+          .skip(skip)
+          .take(limit)
+          .getManyAndCount();
+
+        products = categoryProducts;
+        stores = categoryStores;
+        totalProducts = productCount;
+        totalStores = storeCount;
       }
 
       return {
+        meta: {
+          page,
+          limit,
+          totalProducts,
+          totalStores,
+          total: totalProducts + totalStores,
+          totalPages: Math.ceil((totalProducts + totalStores) / limit),
+        },
         category: category.name,
         products,
         stores,
       };
     }
 
-    async getAllStores() {
-      return await this.storeRepository.find({
-        order: { created_at: 'DESC' },
-      });
+    async getAllStores(pagination: PaginationDto) {
+      const { page = 1, limit = 100 } = pagination;
+      const skip = (page - 1) * limit;
+
+      const [stores, total] = await this.storeRepository
+        .createQueryBuilder('store')
+        .orderBy('store.created_at', 'DESC')
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      return {
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        stores,
+      };
     }
 
     async getStoreById(id: number) {
@@ -130,10 +192,26 @@ export class DashboardService {
       return store;
     }
 
-    async getAllProducts() {
-      return await this.productRepository.find({
-        order: { created_at: 'DESC' },
-      });
+    async getAllProducts(pagination: PaginationDto) {
+      const { page = 1, limit = 10 } = pagination;
+      const skip = (page - 1) * limit;
+
+      const [products, total] = await this.productRepository
+        .createQueryBuilder('product')
+        .orderBy('product.created_at', 'DESC')
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      return {
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        products,
+      };
     }
 
     async getProductById(id: number) {
@@ -151,23 +229,46 @@ export class DashboardService {
       });
     }
 
-    getCitiesByStateId(stateId: number) {
+    private capitalize(str: string) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    getCitiesByStateId(stateId: number, pagination: PaginationDto) {
       const states = this.getAllStates();
       const state = states.find(s => s.id === +stateId);
+
+      const { page = 1, limit = 100 } = pagination;
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      
       if (!state) {
         throw new NotFoundException('State not found');
       }
 
       const filePath = path.join(this.statesDir, state.name.toLowerCase() + '.json');
+
       if (!fs.existsSync(filePath)) {
         throw new NotFoundException('State data file not found');
       }
 
       const cities = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      return cities;
-    }
 
-    private capitalize(str: string) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
+      const sortedCities = cities.sort((a, b) => {
+        const popA = a['pop est'] || 0;
+        const popB = b['pop est'] || 0;
+        return popB - popA;
+      });
+
+      const paginatedCities = sortedCities.slice(start, end);
+
+      return {
+        meta: {
+          page,
+          limit,
+          total: cities.length,
+          totalPages: Math.ceil(cities.length / limit),
+        },
+        paginatedCities,
+      };
     }
 }

@@ -7,6 +7,7 @@ import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
 import { _AUTH_COOKIE_NAME_, DASHBOARD_CATEGORIES } from '@/constants';
 import { DashboardService } from '../services/dashboard.service';
 import { SearchDto } from '../dto/search.dto';
+import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
 
 @ApiCookieAuth(_AUTH_COOKIE_NAME_)
 @UseGuards(AuthGuard)
@@ -20,8 +21,8 @@ export class DashboardController {
     ) {}
 
     @Get('search')
-    async search(@Query() filters: SearchDto, @Res() res: Response) {
-        const data = await this.dashboardService.search(filters);
+    async search(@Query() filters: SearchDto, @Query() pagination: PaginationDto, @Res() res: Response) {
+        const data = await this.dashboardService.search(filters, pagination);
         return res.status(HttpStatus.OK).json({ success: true, data });
     }
 
@@ -43,15 +44,15 @@ export class DashboardController {
     }
 
     @Get('category/:id')
-    async getCategory(@Param('id') categoryId: number, @Res() res: Response,
+    async getCategory(@Param('id') categoryId: number, @Query() pagination: PaginationDto, @Res() res: Response,
     ) {
-        const data = await this.dashboardService.getCategory(categoryId);
+        const data = await this.dashboardService.getCategory(categoryId, pagination);
         return res.status(HttpStatus.OK).json({ success: true, data });
     }
 
     @Get('stores')
-    async getAllStores(@Res() res: Response) {
-        const stores = await this.dashboardService.getAllStores();
+    async getAllStores(@Query() pagination: PaginationDto, @Res() res: Response) {
+        const stores = await this.dashboardService.getAllStores(pagination);
         return res.status(HttpStatus.OK).json({ success: true, data: stores });
     }
 
@@ -62,8 +63,8 @@ export class DashboardController {
     }
 
     @Get('products')
-    async getAllProducts(@Res() res: Response) {
-        const products = await this.dashboardService.getAllProducts();
+    async getAllProducts(@Query() pagination: PaginationDto, @Res() res: Response) {
+        const products = await this.dashboardService.getAllProducts(pagination);
         return res.status(HttpStatus.OK).json({ success: true, data: products });
     }
 
@@ -80,9 +81,9 @@ export class DashboardController {
     }
 
     @Get('state/:id/cities')
-    async getCities(@Param('id') stateId: number, @Res() res: Response) {
+    async getCities(@Param('id') stateId: number, @Query() pagination: PaginationDto, @Res() res: Response) {
         try {
-        const cities = this.dashboardService.getCitiesByStateId(stateId);
+        const cities = this.dashboardService.getCitiesByStateId(stateId, pagination);
         return res.status(HttpStatus.OK).json({ success: true, data: cities });
         } catch (err) {
         return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: err.message });

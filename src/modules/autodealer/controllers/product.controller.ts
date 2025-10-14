@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, Patch, Delete, UseGuards, UsePipes, Req, Res, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Patch, Delete, UseGuards, UsePipes, Req, Res, HttpStatus, Query } from '@nestjs/common';
 import { ProductService } from '../service/product.service';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { JoiValidationPipe } from '@/pipes/joi.validation.pipe';
@@ -8,6 +8,7 @@ import { Response } from 'express';
 import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
 import { createProductValidation } from '../validations/product.validation';
 import { _AUTH_COOKIE_NAME_ } from '@/constants';
+import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
 
 @ApiCookieAuth(_AUTH_COOKIE_NAME_)
 @UseGuards(AuthGuard)
@@ -24,8 +25,8 @@ export class ProductController {
     }
 
     @Get()
-    async getAllProducts(@Req() req: UserRequest, @Res() res: Response) {
-        const products = await this.productService.getAllProducts(req.user);
+    async getAllProducts(@Req() req: UserRequest, @Query() pagination: PaginationDto, @Res() res: Response) {
+        const products = await this.productService.getAllProducts(req.user, pagination);
         return res.status(HttpStatus.OK).json({ success: true, data: products });
     }
 

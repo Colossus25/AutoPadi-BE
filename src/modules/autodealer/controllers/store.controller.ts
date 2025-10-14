@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, Patch, Delete, UseGuards, UsePipes, Req, Res, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Patch, Delete, UseGuards, UsePipes, Req, Res, HttpStatus, Query } from '@nestjs/common';
 import { StoreService } from '../service/store.service';
 import { CreateStoreDto } from '../dto/create-store.dto';
 import { JoiValidationPipe } from '@/pipes/joi.validation.pipe';
@@ -8,6 +8,7 @@ import { Response } from 'express';
 import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
 import { createStoreValidation } from '../validations/store.validation';
 import { _AUTH_COOKIE_NAME_ } from '@/constants';
+import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
 
 @ApiCookieAuth(_AUTH_COOKIE_NAME_)
 @UseGuards(AuthGuard)
@@ -24,8 +25,8 @@ export class StoreController {
     }
 
     @Get()
-    async getAllStores(@Req() req: UserRequest, @Res() res: Response) {
-        const stores = await this.storeService.getAllStores(req.user);
+    async getAllStores(@Req() req: UserRequest, @Query() pagination: PaginationDto, @Res() res: Response) {
+        const stores = await this.storeService.getAllStores(req.user, pagination);
         return res.status(HttpStatus.OK).json({ success: true, data: stores });
     }
 
