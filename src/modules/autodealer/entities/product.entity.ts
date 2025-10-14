@@ -1,61 +1,64 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '@/modules/auth/entities/user.entity';
-import { OneToMany } from 'typeorm';
-import { Product } from './product.entity';
+import { Store } from './store.entity';
 
-@Entity('stores')
-export class Store {
+@Entity('products')
+export class Product {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ nullable: true })
-  name: string;
+  title: string;
 
   @Column({ nullable: true })
   description: string;
 
-  @Column({ nullable: true })
-  image: string;
-
-  @Column({ nullable: true })
-  category: string;
-
-  @Column({ nullable: true })
-  address: string;
-
-  @Column({ nullable: true })
-  subscription_type: string;
-
-  @Column({ nullable: true })
-  registration_no: string;
-
-  @Column({ nullable: true })
-  phone: string;
-
-  @Column({ nullable: true })
-  email: string;
-
-  @Column({ nullable: true })
-  website: string;
-
-  @Column({ nullable: true })
-  contact_person_name: string;
-
-  @Column({ nullable: true })
-  contact_person_phone: string;
+  @Column('text', { array: true, nullable: true })
+  media: string[];
 
   @Column({ nullable: true })
   location_coordinates: string;
 
   @Column({ nullable: true })
-  subscription_plan: string;
+  category: string;
+
+  @Column({ nullable: true })
+  listing_type: string;
+
+  @Column({ nullable: true })
+  price: string;
+
+  @Column({ nullable: true })
+  make: string;
+
+  @Column({ nullable: true })
+  year: string;
+
+  @Column({ nullable: true })
+  type: string;
+
+  @Column({ nullable: true })
+  condition: string;
+
+  @Column({ nullable: true })
+  mileage: string;
+
+  @Column({ nullable: true })
+  colour: string;
+
+  @Column({ nullable: true })
+  body: string;
+
+  @Column({ nullable: true })
+  fuel: string;
+
+  @ManyToOne(() => Store, (store) => store.products, { eager: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'store_id' })
+  store: Store;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'created_by' })
   created_by: User;
-
-  @OneToMany(() => Product, (product) => product.store)
-  products: Product[];
 
   @CreateDateColumn()
   created_at: Date;

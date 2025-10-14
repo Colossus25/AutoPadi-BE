@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Ilorin",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 8.4966,
+    "long": 4.5421,
+    "elev ft": 978,
+    "pop est": 999999
+  },
+  {
+    "name": "Offa",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 8.1492,
+    "long": 4.7167,
+    "elev ft": 1050,
+    "pop est": 113000
+  },
+  {
+    "name": "Omu-Aran",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 8.1333,
+    "long": 5.1,
+    "elev ft": 1122,
+    "pop est": 90000
+  },
+  {
+    "name": "Jebba",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 9.1178,
+    "long": 4.8226,
+    "elev ft": 305,
+    "pop est": 55600
+  },
+  {
+    "name": "Patigi",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 8.73,
+    "long": 5.76,
+    "elev ft": 270,
+    "pop est": 35000
+  },
+  {
+    "name": "Kaiama",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 9.61,
+    "long": 3.93,
+    "elev ft": 420,
+    "pop est": 40000
+  },
+  {
+    "name": "Lafiagi",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 8.85,
+    "long": 5.41,
+    "elev ft": 285,
+    "pop est": 52000
+  },
+  {
+    "name": "Share",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 8.82,
+    "long": 4.98,
+    "elev ft": 890,
+    "pop est": 31000
+  },
+  {
+    "name": "Bacita",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 9.08,
+    "long": 4.97,
+    "elev ft": 300,
+    "pop est": 28000
+  },
+  {
+    "name": "Okuta",
+    "what": "city",
+    "region": "Kwara",
+    "country": "Nigeria",
+    "lat": 9.22,
+    "long": 3.17,
+    "elev ft": 390,
+    "pop est": 20000
+  }
+]

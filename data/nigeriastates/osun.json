@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Osogbo",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.77,
+    "long": 4.56,
+    "elev ft": 935,
+    "pop est": 890000
+  },
+  {
+    "name": "Ife",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.48,
+    "long": 4.56,
+    "elev ft": 978,
+    "pop est": 509000
+  },
+  {
+    "name": "Ilesa",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.62,
+    "long": 4.73,
+    "elev ft": 1140,
+    "pop est": 344000
+  },
+  {
+    "name": "Ejigbo",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.90,
+    "long": 4.31,
+    "elev ft": 1100,
+    "pop est": 138000
+  },
+  {
+    "name": "Iwo",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.63,
+    "long": 4.19,
+    "elev ft": 1040,
+    "pop est": 191000
+  },
+  {
+    "name": "Ede",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.73,
+    "long": 4.43,
+    "elev ft": 940,
+    "pop est": 160000
+  },
+  {
+    "name": "Iragbiji",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.92,
+    "long": 4.68,
+    "elev ft": 1050,
+    "pop est": 90000
+  },
+  {
+    "name": "Ikire",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.37,
+    "long": 4.18,
+    "elev ft": 860,
+    "pop est": 142000
+  },
+  {
+    "name": "Ipetu-Ijesa",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.43,
+    "long": 4.99,
+    "elev ft": 1210,
+    "pop est": 78000
+  },
+  {
+    "name": "Gbongan",
+    "what": "city",
+    "region": "Osun",
+    "country": "Nigeria",
+    "lat": 7.47,
+    "long": 4.35,
+    "elev ft": 900,
+    "pop est": 95000
+  }
+]
