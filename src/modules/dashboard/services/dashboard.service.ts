@@ -189,7 +189,17 @@ export class DashboardService {
       const store = await this.storeRepository.findOne({ where: { id } });
       if (!store) throw new NotFoundException('Store not found');
 
-      return store;
+      const products = await this.productRepository.find({
+        where: { store: { id } },
+        order: { created_at: 'DESC' },
+        take: 10,
+      });
+
+
+      return {
+        ...store,
+        products,
+      };
     }
 
     async getAllProducts(pagination: PaginationDto) {
