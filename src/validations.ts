@@ -29,7 +29,7 @@ export const ConfigModuleSchema = Joi.object({
   CLOUDINARYAPIKEY: Joi.string().required(),
   CLOUDINARYAPISECRET: Joi.string().required(),
   SWAGGER_PASSWORD: Joi.string().required(),
-  REDIS_HOST: Joi.string().required(),
-  REDIS_PORT: Joi.string().allow(null, ""),
-  REDIS_PASSWORD: Joi.string().allow(null, ""),
+  // REDIS_HOST: Joi.string().required(),
+  // REDIS_PORT: Joi.string().allow(null, ""),
+  // REDIS_PASSWORD: Joi.string().allow(null, ""),
 });

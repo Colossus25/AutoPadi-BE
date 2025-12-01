@@ -1,7 +1,7 @@
 import { _AUTH_COOKIE_NAME_ } from "@/constants";
 import { SystemCache, UserRequest } from "@/definitions";
 import { AuthGuard } from "@/guards";
-import { CacheService } from "@/modules/global/cache-container/cache-container.service";
+// import { CacheService } from "@/modules/global/cache-container/cache-container.service";
 import { JoiValidationPipe } from "@/pipes/joi.validation.pipe";
 import {
   Body,
@@ -28,14 +28,14 @@ import {
 @Controller("user")
 export class UsersController {
   constructor(
-    private readonly cacheService: CacheService
+    // private readonly cacheService: CacheService
   ) {}
 
   @Delete("logout")
   async logout(@Req() req: UserRequest, @Res() res: Response) {
     //Clear cache
     Object.keys(SystemCache).forEach((key) => {
-      this.cacheService.del(`${SystemCache[key]}_${req.user.id}`);
+      // this.cacheService.del(`${SystemCache[key]}_${req.user.id}`);
     });
 
     res.clearCookie(_AUTH_COOKIE_NAME_);

@@ -28,7 +28,7 @@ import {
   LoginDto,
   ResetPasswordDto,
 } from "../dto";
-import { CacheService } from "@/modules/global/cache-container/cache-container.service";
+// import { CacheService } from "@/modules/global/cache-container/cache-container.service";
 import { User } from "../entities/user.entity";
 
 @Injectable()
@@ -39,7 +39,7 @@ export class AuthService extends BaseService {
     private readonly userRepository: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
-    private readonly cacheService: CacheService,
+    // private readonly cacheService: CacheService,
   ) {
     super();
   }
@@ -143,11 +143,11 @@ export class AuthService extends BaseService {
         "Email provided is not recognized, please try again."
       );
 
-    //Check if sent less than 5mins ago
-    if (await this.cacheService.get(`${user.email}_forgot_password`))
-      throw new BadRequestException(
-        "Please wait for about 5 minutes to request for another code."
-      );
+    // //Check if sent less than 5mins ago
+    // if (await this.cacheService.get(`${user.email}_forgot_password`))
+    //   throw new BadRequestException(
+    //     "Please wait for about 5 minutes to request for another code."
+    //   );
 
     const remember_token = generateNumericCode();
     this.userRepository.update({ email }, { remember_token });
@@ -157,12 +157,12 @@ export class AuthService extends BaseService {
       remember_token,
     ).sendPasswordResetEmail();
 
-    //Save in redis
-    this.cacheService.set(
-      `${user.email}_forgot_password`,
-      remember_token,
-      _THROTTLE_TTL_
-    );
+    // //Save in redis
+    // this.cacheService.set(
+    //   `${user.email}_forgot_password`,
+    //   remember_token,
+    //   _THROTTLE_TTL_
+    // );
 
     return {
       message: resend

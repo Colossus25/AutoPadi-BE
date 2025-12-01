@@ -7,7 +7,7 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import * as redisStore from "cache-manager-redis-store";
+// import * as redisStore from "cache-manager-redis-store";
 import { appConfig, dataSource } from "./config";
 import { _IS_PROD_ } from "./constants";
 // import { SentryModule } from '@sentry/nestjs/setup';
@@ -44,18 +44,18 @@ import { AutodealerModule } from "./modules/autodealer/autodealer.module";
     ScheduleModule.forRoot(),
     BullModule.forRoot({
       redis: {
-        host: appConfig.REDIS_HOST,
-        port: appConfig.REDIS_PORT,
-        password: appConfig.REDIS_PASSWORD,
+        // host: appConfig.REDIS_HOST,
+        // port: appConfig.REDIS_PORT,
+        // password: appConfig.REDIS_PASSWORD,
       },
     }),
     CacheModule.register({
       ttl: 60 * 20,
       isGlobal: true,
       max: 5000,
-      store: redisStore,
-      host: appConfig.REDIS_HOST,
-      port: appConfig.REDIS_PORT,
+      // store: redisStore,
+      // host: appConfig.REDIS_HOST,
+      // port: appConfig.REDIS_PORT,
     }),
     AuthModule,
     PersonalAccessTokenModule,
