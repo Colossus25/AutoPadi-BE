@@ -10,8 +10,8 @@ export class CreateStoreDto {
   @ApiProperty({ example: 'http://res.cloudinary.com/dqaui3vaf/image/upload/v1760195782/cyxlpcga3amnxy6nhknw.png', required: false })
   image?: string;
 
-  @ApiProperty({ example: 'Automobiles', required: false })
-  category?: string;
+  @ApiProperty({ example: ['Automobiles', 'Parts'], isArray: true, required: false })
+  category?: string[];
 
   @ApiProperty({ example: '1, ABC Street, GRA - Ikeja, Lagos.', required: false })
   address?: string;

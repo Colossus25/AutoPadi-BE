@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Store } from '@/modules/autodealer/entities/store.entity';
 import { Product } from '@/modules/autodealer/entities/product.entity';
+import { ProductAttribute } from '@/modules/superadmin/entities/product-attribute.entity';
 import { DASHBOARD_CATEGORIES } from '@/constants';
 import { SearchDto } from '../dto/search.dto';
 import * as fs from 'fs';
@@ -17,6 +18,8 @@ export class DashboardService {
     private readonly storeRepository: Repository<Store>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductAttribute)
+    private readonly productAttributeRepository: Repository<ProductAttribute>,
   ) {}
 
     async search(filters: SearchDto, pagination: PaginationDto) {
@@ -281,4 +284,16 @@ export class DashboardService {
         paginatedCities,
       };
     }
+
+    async getAllProductAttributes() {
+      return await this.productAttributeRepository.find({ order: { attribute_type: 'ASC', value: 'ASC' } });
+    }
+
+    async getProductAttributesByType(attribute_type: string) {
+      return await this.productAttributeRepository.find({
+        where: { attribute_type: attribute_type as any },
+        order: { value: 'ASC' },
+      });
+    }
 }
+

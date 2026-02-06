@@ -10,6 +10,9 @@ import { SuperGroup } from './entities/super-group.entity';
 import { Banner } from './entities/banner.entity';
 import { BannerService } from './service/banner.service';
 import { BannerController } from './controllers/banner.controller';
+import { ProductAttribute } from './entities/product-attribute.entity';
+import { ProductAttributeService } from './service/product-attribute.service';
+import { ProductAttributeController } from './controllers/product-attribute.controller';
 
 
 @Module({
@@ -20,10 +23,11 @@ import { BannerController } from './controllers/banner.controller';
       SuperPermissions,
       SuperGroup,
       Banner,
+      ProductAttribute,
     ])
   ],
-  providers: [SuperadminService, SuperGroupService, BannerService],
-  controllers: [SuperadminController, BannerController],
+  providers: [SuperadminService, SuperGroupService, BannerService, ProductAttributeService],
+  controllers: [SuperadminController, BannerController, ProductAttributeController],
   exports: [SuperadminService]
 })
 export class SuperadminModule {}

@@ -21,8 +21,8 @@ export class CreateProductDto {
   @ApiProperty({ example: '6.5244, 3.3792', required: false })
   location_coordinates?: string;
 
-  @ApiProperty({ example: 'Automobiles', required: false })
-  category?: string;
+  @ApiProperty({ example: ['Automobiles', 'Parts'], isArray: true, required: false })
+  category?: string[];
 
   @ApiProperty({ example: 'Sale', required: false })
   listing_type?: string;

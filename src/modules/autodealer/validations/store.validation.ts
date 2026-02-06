@@ -4,7 +4,7 @@ export const createStoreValidation = Joi.object({
     name: Joi.string().allow('', null).optional(),
     description: Joi.string().allow('', null).optional(),
     image: Joi.string().allow('', null).optional(),
-    category: Joi.string().allow('', null).optional(),
+    category: Joi.array().items(Joi.string()).allow(null).optional(),
     address: Joi.string().allow('', null).optional(),
     subscription_type: Joi.string().allow('', null).optional(),
     registration_no: Joi.string().allow('', null).optional(),

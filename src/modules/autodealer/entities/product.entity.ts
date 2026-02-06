@@ -19,8 +19,8 @@ export class Product {
   @Column({ nullable: true })
   location_coordinates: string;
 
-  @Column({ nullable: true })
-  category: string;
+  @Column('simple-array', { nullable: true })
+  category: string[];
 
   @Column({ nullable: true })
   listing_type: string;

@@ -17,8 +17,8 @@ export class Store {
   @Column({ nullable: true })
   image: string;
 
-  @Column({ nullable: true })
-  category: string;
+  @Column('simple-array', { nullable: true })
+  category: string[];
 
   @Column({ nullable: true })
   address: string;

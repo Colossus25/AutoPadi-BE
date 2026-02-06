@@ -89,4 +89,16 @@ export class DashboardController {
         return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: err.message });
         }
     }
+
+    @Get('product-attributes')
+    async getAllProductAttributes(@Res() res: Response) {
+        const attributes = await this.dashboardService.getAllProductAttributes();
+        return res.status(HttpStatus.OK).json({ success: true, data: attributes });
+    }
+
+    @Get('product-attributes/:attribute_type')
+    async getProductAttributesByType(@Param('attribute_type') attribute_type: string, @Res() res: Response) {
+        const attributes = await this.dashboardService.getProductAttributesByType(attribute_type);
+        return res.status(HttpStatus.OK).json({ success: true, data: attributes });
+    }
 }

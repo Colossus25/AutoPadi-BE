@@ -5,7 +5,7 @@ export const createProductValidation = Joi.object({
   description: Joi.string().allow('', null).optional(),
   media: Joi.array().items(Joi.string()).optional(),
   location_coordinates: Joi.string().allow('', null).optional(),
-  category: Joi.string().allow('', null).optional(),
+  category: Joi.array().items(Joi.string()).allow(null).optional(),
   listing_type: Joi.string().allow('', null).optional(),
   price: Joi.string().allow('', null).optional(),
   make: Joi.string().allow('', null).optional(),
