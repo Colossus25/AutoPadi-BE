@@ -196,4 +196,50 @@ export class AuthService extends BaseService {
     this.userRepository.update({ id }, { remember_token: null });
     return { message: "Password reset." };
   }
+
+  async resendWelcomeEmail({ email }: ForgotPasswordDto) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user)
+      throw new NotAcceptableException(
+        "Email provided is not recognized, please try again."
+      );
+
+    const remember_token = user.remember_token || generateNumericCode();
+    
+    if (!user.remember_token) {
+      await this.userRepository.update({ email }, { remember_token });
+    }
+
+    await new EmailService(
+      { email },
+      remember_token,
+    ).sendWelcomeEmail();
+
+    return {
+      message: "Welcome email has been resent. Please check your inbox.",
+    };
+  }
+
+  async resendVerifyEmail({ email }: ForgotPasswordDto) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user)
+      throw new NotAcceptableException(
+        "Email provided is not recognized, please try again."
+      );
+
+    const remember_token = user.remember_token || generateNumericCode();
+    
+    if (!user.remember_token) {
+      await this.userRepository.update({ email }, { remember_token });
+    }
+
+    await new EmailService(
+      { email },
+      remember_token,
+    ).sendVerifyEmail();
+
+    return {
+      message: "Verification email has been resent. Please check your inbox.",
+    };
+  }
 }

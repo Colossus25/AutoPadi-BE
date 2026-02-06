@@ -13,6 +13,9 @@ import { BannerController } from './controllers/banner.controller';
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { ProductAttributeService } from './service/product-attribute.service';
 import { ProductAttributeController } from './controllers/product-attribute.controller';
+import { ServiceAttribute } from './entities/service-attribute.entity';
+import { ServiceAttributeService } from './service/service-attribute.service';
+import { ServiceAttributeController } from './controllers/service-attribute.controller';
 
 
 @Module({
@@ -24,10 +27,11 @@ import { ProductAttributeController } from './controllers/product-attribute.cont
       SuperGroup,
       Banner,
       ProductAttribute,
+      ServiceAttribute,
     ])
   ],
-  providers: [SuperadminService, SuperGroupService, BannerService, ProductAttributeService],
-  controllers: [SuperadminController, BannerController, ProductAttributeController],
+  providers: [SuperadminService, SuperGroupService, BannerService, ProductAttributeService, ServiceAttributeService],
+  controllers: [SuperadminController, BannerController, ProductAttributeController, ServiceAttributeController],
   exports: [SuperadminService]
 })
 export class SuperadminModule {}

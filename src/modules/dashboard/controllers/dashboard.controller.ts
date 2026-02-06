@@ -62,6 +62,18 @@ export class DashboardController {
         return res.status(HttpStatus.OK).json({ success: true, data: store });
     }
 
+    @Get('services')
+    async getAllServices(@Query() pagination: PaginationDto, @Res() res: Response) {
+        const services = await this.dashboardService.getAllServices(pagination);
+        return res.status(HttpStatus.OK).json({ success: true, data: services });
+    }
+
+    @Get('service/:id')
+    async getService(@Param('id') id: number, @Res() res: Response) {
+        const service = await this.dashboardService.getServiceById(id);
+        return res.status(HttpStatus.OK).json({ success: true, data: service });
+    }
+
     @Get('products')
     async getAllProducts(@Query() pagination: PaginationDto, @Res() res: Response) {
         const products = await this.dashboardService.getAllProducts(pagination);
@@ -99,6 +111,18 @@ export class DashboardController {
     @Get('product-attributes/:attribute_type')
     async getProductAttributesByType(@Param('attribute_type') attribute_type: string, @Res() res: Response) {
         const attributes = await this.dashboardService.getProductAttributesByType(attribute_type);
+        return res.status(HttpStatus.OK).json({ success: true, data: attributes });
+    }
+
+    @Get('service-attributes')
+    async getAllServiceAttributes(@Res() res: Response) {
+        const attributes = await this.dashboardService.getAllServiceAttributes();
+        return res.status(HttpStatus.OK).json({ success: true, data: attributes });
+    }
+
+    @Get('service-attributes/:attribute_type')
+    async getServiceAttributesByType(@Param('attribute_type') attribute_type: string, @Res() res: Response) {
+        const attributes = await this.dashboardService.getServiceAttributesByType(attribute_type);
         return res.status(HttpStatus.OK).json({ success: true, data: attributes });
     }
 }

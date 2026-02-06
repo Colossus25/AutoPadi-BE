@@ -3,7 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Store } from '@/modules/autodealer/entities/store.entity';
 import { Product } from '@/modules/autodealer/entities/product.entity';
+import { Service } from '@/modules/serviceprovider/entities/service.entity';
 import { ProductAttribute } from '@/modules/superadmin/entities/product-attribute.entity';
+import { ServiceAttribute } from '@/modules/superadmin/entities/service-attribute.entity';
 import { DASHBOARD_CATEGORIES } from '@/constants';
 import { SearchDto } from '../dto/search.dto';
 import * as fs from 'fs';
@@ -18,8 +20,12 @@ export class DashboardService {
     private readonly storeRepository: Repository<Store>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(Service)
+    private readonly serviceRepository: Repository<Service>,
     @InjectRepository(ProductAttribute)
     private readonly productAttributeRepository: Repository<ProductAttribute>,
+    @InjectRepository(ServiceAttribute)
+    private readonly serviceAttributeRepository: Repository<ServiceAttribute>,
   ) {}
 
     async search(filters: SearchDto, pagination: PaginationDto) {
@@ -205,6 +211,34 @@ export class DashboardService {
       };
     }
 
+    async getAllServices(pagination: PaginationDto) {
+      const { page = 1, limit = 100 } = pagination;
+      const skip = (page - 1) * limit;
+
+      const [services, total] = await this.serviceRepository
+        .createQueryBuilder('service')
+        .orderBy('service.created_at', 'DESC')
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      return {
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        services,
+      };
+    }
+
+    async getServiceById(id: number) {
+      const service = await this.serviceRepository.findOne({ where: { id } });
+      if (!service) throw new NotFoundException('Service not found');
+      return service;
+    }
+
     async getAllProducts(pagination: PaginationDto) {
       const { page = 1, limit = 10 } = pagination;
       const skip = (page - 1) * limit;
@@ -291,6 +325,17 @@ export class DashboardService {
 
     async getProductAttributesByType(attribute_type: string) {
       return await this.productAttributeRepository.find({
+        where: { attribute_type: attribute_type as any },
+        order: { value: 'ASC' },
+      });
+    }
+
+    async getAllServiceAttributes() {
+      return await this.serviceAttributeRepository.find({ order: { attribute_type: 'ASC', value: 'ASC' } });
+    }
+
+    async getServiceAttributesByType(attribute_type: string) {
+      return await this.serviceAttributeRepository.find({
         where: { attribute_type: attribute_type as any },
         order: { value: 'ASC' },
       });

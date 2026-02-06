@@ -128,4 +128,16 @@ export class AuthController {
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return await this.authService.resetPassword(resetPasswordDto);
   }
+
+  @Post("resend-welcome-email")
+  @UsePipes(new JoiValidationPipe(ForgotPasswordValidation))
+  async resendWelcomeEmail(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return await this.authService.resendWelcomeEmail(forgotPasswordDto);
+  }
+
+  @Post("resend-verify-email")
+  @UsePipes(new JoiValidationPipe(ForgotPasswordValidation))
+  async resendVerifyEmail(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return await this.authService.resendVerifyEmail(forgotPasswordDto);
+  }
 }
