@@ -74,6 +74,30 @@ export class DashboardController {
         return res.status(HttpStatus.OK).json({ success: true, data: service });
     }
 
+    @Get('drivers')
+    async getAllDrivers(@Query() pagination: PaginationDto, @Res() res: Response) {
+        const drivers = await this.dashboardService.getAllDrivers(pagination);
+        return res.status(HttpStatus.OK).json({ success: true, data: drivers });
+    }
+
+    @Get('driver/:id')
+    async getDriver(@Param('id') id: number, @Res() res: Response) {
+        const driver = await this.dashboardService.getDriverById(id);
+        return res.status(HttpStatus.OK).json({ success: true, data: driver });
+    }
+
+    @Get('driver-jobs')
+    async getAllDriverJobs(@Query() pagination: PaginationDto, @Res() res: Response) {
+        const driverJobs = await this.dashboardService.getAllDriverJobs(pagination);
+        return res.status(HttpStatus.OK).json({ success: true, data: driverJobs });
+    }
+
+    @Get('driver-job/:id')
+    async getDriverJob(@Param('id') id: number, @Res() res: Response) {
+        const driverJob = await this.dashboardService.getDriverJobById(id);
+        return res.status(HttpStatus.OK).json({ success: true, data: driverJob });
+    }
+
     @Get('products')
     async getAllProducts(@Query() pagination: PaginationDto, @Res() res: Response) {
         const products = await this.dashboardService.getAllProducts(pagination);

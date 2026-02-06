@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Store } from '@/modules/autodealer/entities/store.entity';
 import { Product } from '@/modules/autodealer/entities/product.entity';
 import { Service } from '@/modules/serviceprovider/entities/service.entity';
+import { DriverProfile } from '@/modules/driver/entities/driver-profile.entity';
+import { DriverJob } from '@/modules/driver-employer/entities/driver-job.entity';
 import { ProductAttribute } from '@/modules/superadmin/entities/product-attribute.entity';
 import { ServiceAttribute } from '@/modules/superadmin/entities/service-attribute.entity';
 import { DASHBOARD_CATEGORIES } from '@/constants';
@@ -22,6 +24,10 @@ export class DashboardService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    @InjectRepository(DriverProfile)
+    private readonly driverProfileRepository: Repository<DriverProfile>,
+    @InjectRepository(DriverJob)
+    private readonly driverJobRepository: Repository<DriverJob>,
     @InjectRepository(ProductAttribute)
     private readonly productAttributeRepository: Repository<ProductAttribute>,
     @InjectRepository(ServiceAttribute)
@@ -231,6 +237,62 @@ export class DashboardService {
         },
         services,
       };
+    }
+
+    async getAllDrivers(pagination: PaginationDto) {
+      const { page = 1, limit = 100 } = pagination;
+      const skip = (page - 1) * limit;
+
+      const [drivers, total] = await this.driverProfileRepository
+        .createQueryBuilder('driver')
+        .orderBy('driver.created_at', 'DESC')
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      return {
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        drivers,
+      };
+    }
+
+    async getDriverById(id: number) {
+      const driver = await this.driverProfileRepository.findOne({ where: { id } });
+      if (!driver) throw new NotFoundException('Driver profile not found');
+      return driver;
+    }
+
+    async getAllDriverJobs(pagination: PaginationDto) {
+      const { page = 1, limit = 100 } = pagination;
+      const skip = (page - 1) * limit;
+
+      const [driverJobs, total] = await this.driverJobRepository
+        .createQueryBuilder('driver_job')
+        .orderBy('driver_job.created_at', 'DESC')
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      return {
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        driverJobs,
+      };
+    }
+
+    async getDriverJobById(id: number) {
+      const driverJob = await this.driverJobRepository.findOne({ where: { id } });
+      if (!driverJob) throw new NotFoundException('Driving job not found');
+      return driverJob;
     }
 
     async getServiceById(id: number) {

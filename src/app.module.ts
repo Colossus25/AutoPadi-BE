@@ -27,6 +27,8 @@ import { SuperadminModule } from './modules/superadmin/superadmin.module';
 import { AutodealerModule } from "./modules/autodealer/autodealer.module";
 import { ServiceProviderModule } from "./modules/serviceprovider/serviceprovider.module";
 import { BookingModule } from "./modules/booking/booking.module";
+import { DriverModule } from "./modules/driver/driver.module";
+import { DriverEmployerModule } from "./modules/driver-employer/driver-employer.module";
 
 @Module({
   imports: [
@@ -66,6 +68,8 @@ import { BookingModule } from "./modules/booking/booking.module";
     AutodealerModule,
     ServiceProviderModule,
     BookingModule,
+    DriverModule,
+    DriverEmployerModule,
     SettingsModule,
     CloudinaryModule,
     CronModule,
