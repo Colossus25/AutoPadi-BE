@@ -7,12 +7,13 @@ import {
 } from './entities';
 import { MessagingService } from './messaging.service';
 import { MessagingController } from './messaging.controller';
+import { MessagingGateway } from './messaging.gateway';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Conversation, ConversationParticipant, Message]),
   ],
-  providers: [MessagingService],
+  providers: [MessagingService, MessagingGateway],
   controllers: [MessagingController],
   exports: [MessagingService],
 })
