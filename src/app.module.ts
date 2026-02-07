@@ -29,6 +29,7 @@ import { ServiceProviderModule } from "./modules/serviceprovider/serviceprovider
 import { BookingModule } from "./modules/booking/booking.module";
 import { DriverModule } from "./modules/driver/driver.module";
 import { DriverEmployerModule } from "./modules/driver-employer/driver-employer.module";
+import { MessagingModule } from "./modules/messaging/messaging.module";
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { DriverEmployerModule } from "./modules/driver-employer/driver-employer.
     BookingModule,
     DriverModule,
     DriverEmployerModule,
+    MessagingModule,
     SettingsModule,
     CloudinaryModule,
     CronModule,
