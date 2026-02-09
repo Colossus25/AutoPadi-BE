@@ -17,12 +17,15 @@ export class CloudinaryService {
     if (!files || files.length < 1) return [];
     const uploadPromises = files.map(async (file) => {
       return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.v2.uploader.upload_stream((error, result) => {
-          if (error) return reject(error);
+        const uploadStream = cloudinary.v2.uploader.upload_stream(
+          { resource_type: 'auto' },
+          (error, result) => {
+            if (error) return reject(error);
 
-          delete result?.api_key;
-          resolve(result);
-        });
+            delete result?.api_key;
+            resolve(result);
+          },
+        );
         streamifier.createReadStream(file.buffer).pipe(uploadStream);
       });
     });
