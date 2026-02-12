@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Service } from '../entities/service.entity';
+import { Service, ServiceStatus } from '../entities/service.entity';
 import { CreateServiceDto } from '../dto/create-service.dto';
 import { User } from '@/modules/auth/entities/user.entity';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
@@ -72,5 +72,85 @@ export class ServiceService {
     const service = await this.getServiceById(id, user);
     await this.serviceRepository.remove(service);
     return { message: 'Service deleted successfully' };
+  }
+
+  /**
+   * Get all pending services (for superadmin review)
+   */
+  async getPendingServices(pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const [services, total] = await this.serviceRepository.findAndCount({
+      where: { status: ServiceStatus.PENDING },
+      relations: ['created_by'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      services,
+    };
+  }
+
+  /**
+   * Get all services with status (for superadmin dashboard)
+   */
+  async getAllServicesWithStatus(pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const [services, total] = await this.serviceRepository.findAndCount({
+      relations: ['created_by'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      services,
+    };
+  }
+
+  /**
+   * Approve a service by superadmin
+   */
+  async approveService(id: number) {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    service.status = ServiceStatus.APPROVED;
+    return await this.serviceRepository.save(service);
+  }
+
+  /**
+   * Reject a service by superadmin with optional reason
+   */
+  async rejectService(id: number, reason?: string) {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    service.status = ServiceStatus.REJECTED;
+    if (reason) {
+      service.rejection_reason = reason;
+    }
+    return await this.serviceRepository.save(service);
   }
 }

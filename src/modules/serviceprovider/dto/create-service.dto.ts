@@ -57,6 +57,9 @@ export class CreateServiceDto {
   @ApiProperty({ example: '6.5244, 3.3792', required: false })
   location_coordinates?: string;
 
+  @ApiProperty({ example: 50000, required: false, description: 'Estimated cost in naira' })
+  estimated_cost?: number;
+
   @ApiProperty({ example: 'Padi Plan', required: false })
   subscription_plan?: string;
 }

@@ -17,5 +17,6 @@ export const createServiceValidation = Joi.object({
   contact_person_name: Joi.string().allow('', null).optional(),
   contact_person_phone: Joi.string().allow('', null).optional(),
   location_coordinates: Joi.string().allow('', null).optional(),
+  estimated_cost: Joi.number().allow(null).optional(),
   subscription_plan: Joi.string().allow('', null).optional(),
 });

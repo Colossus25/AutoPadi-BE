@@ -1,6 +1,12 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '@/modules/auth/entities/user.entity';
 
+export enum ServiceStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
 @Entity('services')
 export class Service {
   @PrimaryGeneratedColumn()
@@ -54,8 +60,21 @@ export class Service {
   @Column({ nullable: true })
   location_coordinates: string;
 
+  @Column({ type: 'numeric', nullable: true })
+  estimated_cost: number;
+
   @Column({ nullable: true })
   subscription_plan: string;
+
+  @Column({
+    type: 'enum',
+    enum: ServiceStatus,
+    default: ServiceStatus.PENDING,
+  })
+  status: ServiceStatus;
+
+  @Column({ nullable: true })
+  rejection_reason: string;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'created_by' })
