@@ -6,9 +6,11 @@ import { Store } from './entities/store.entity';
 import { ProductService } from './service/product.service';
 import { ProductController } from './controllers/product.controller';
 import { Product } from './entities/product.entity';
+import { SubscriptionsModule } from '@/modules/subscriptions/subscriptions.module';
 
 @Module({
   imports: [
+    SubscriptionsModule,
     TypeOrmModule.forFeature([
       Store,
       Product,

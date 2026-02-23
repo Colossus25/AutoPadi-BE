@@ -1,0 +1,35 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p We encountered an issue renewing your subscription. 😞
+  p
+    | Your 
+    strong= planName
+    | subscription renewal failed on 
+    strong= new Date(failureDate).toLocaleDateString()
+    | .
+  
+  table.table(style='width: 100%; margin: 20px 0;')
+    tbody
+      tr
+        td Plan:
+        td
+          strong= planName
+      tr
+        td Failure Reason:
+        td= failureReason
+      tr
+        td Action Required:
+        td Renew your subscription
+  
+  p Please try renewing your subscription again. If the problem persists, please contact our support team for assistance.
+  
+  p
+    a(href=`${baseUrl}/dashboard/subscriptions` style='background-color: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;') Try Renewing Again
+  
+  p We appreciate your patience and look forward to serving you.
+  
+  p Best regards,
+  br
+  | The AutoPadi Team

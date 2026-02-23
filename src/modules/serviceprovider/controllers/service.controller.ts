@@ -3,6 +3,7 @@ import { ServiceService } from '../service/service.service';
 import { CreateServiceDto } from '../dto/create-service.dto';
 import { JoiValidationPipe } from '@/pipes/joi.validation.pipe';
 import { AuthGuard } from '@/guards';
+import { SubscriptionGuard } from '@/modules/subscriptions/guards/subscription.guard';
 import { UserRequest } from '@/definitions';
 import { Response } from 'express';
 import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
@@ -18,9 +19,10 @@ export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
   @Post()
+  @UseGuards(SubscriptionGuard)
   @UsePipes(new JoiValidationPipe(createServiceValidation))
   async createService(@Body() dto: CreateServiceDto, @Req() req: UserRequest, @Res() res: Response) {
-    const service = await this.serviceService.createService(dto, req.user);
+    const service = await this.serviceService.createService(dto, req.user, req.user_subscription);
     return res.status(HttpStatus.CREATED).json({ success: true, data: service });
   }
 

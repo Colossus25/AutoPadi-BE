@@ -14,7 +14,7 @@ export class StoreService {
     private readonly storeRepository: Repository<Store>,
   ) {}
 
-    async createStore(dto: CreateStoreDto, user: User) {
+    async createStore(dto: CreateStoreDto, user: User, userSubscription?: any) {
           if (user.user_type !== 'auto dealer') {
             throw new ForbiddenException('Only auto dealers can create a store');
         }
@@ -22,6 +22,7 @@ export class StoreService {
         const store = this.storeRepository.create({
             ...dto,
             created_by: user,
+            user_subscription: userSubscription || null,
         });
         return await this.storeRepository.save(store);
     }

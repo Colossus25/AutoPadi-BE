@@ -1,0 +1,33 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Your subscription has expired. ❌
+  p
+    | Your 
+    strong= planName
+    | subscription expired on 
+    strong= new Date(subscriptionEndDate).toLocaleDateString()
+    | .
+  
+  p Your access to premium features has been limited. To restore full access, please renew your subscription.
+  
+  table.table(style='width: 100%; margin: 20px 0;')
+    tbody
+      tr
+        td Plan:
+        td
+          strong= planName
+      tr
+        td Expired On:
+        td
+          strong= new Date(subscriptionEndDate).toLocaleDateString()
+  
+  p
+    a(href=`${baseUrl}/dashboard/subscriptions` style='background-color: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;') Renew Your Subscription
+  
+  p If you have any questions about your subscription, please contact our support team.
+  
+  p Best regards,
+  br
+  | The AutoPadi Team

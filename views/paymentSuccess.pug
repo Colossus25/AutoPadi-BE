@@ -1,0 +1,38 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Your payment was successful! ✅
+  p
+    | Thank you for your payment towards your 
+    strong= planName
+    | subscription.
+  
+  table.table(style='width: 100%; margin: 20px 0;')
+    tbody
+      tr
+        td Subscription Plan:
+        td
+          strong= planName
+      tr
+        td Amount Paid:
+        td
+          strong ₦#{(amount / 100).toLocaleString()}
+      tr
+        td Payment Date:
+        td= new Date(paymentDate).toLocaleDateString()
+      tr
+        td Reference:
+        td
+          code= reference
+  
+  p Your subscription is now active. You have full access to all premium features.
+  
+  p
+    a(href=`${baseUrl}/dashboard/subscriptions` style='background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;') View Subscription
+  
+  p Thank you for choosing AutoPadi!
+  
+  p Best regards,
+  br
+  | The AutoPadi Team

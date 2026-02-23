@@ -13,13 +13,14 @@ export class ServiceService {
     private readonly serviceRepository: Repository<Service>,
   ) {}
 
-  async createService(dto: CreateServiceDto, user: User) {
+  async createService(dto: CreateServiceDto, user: User, userSubscription?: any) {
     if (user.user_type !== 'service provider') {
       throw new ForbiddenException('Only service providers can create a service');
     }
     const service = this.serviceRepository.create({
       ...dto,
       created_by: user,
+      user_subscription: userSubscription || null,
     });
     return await this.serviceRepository.save(service);
   }

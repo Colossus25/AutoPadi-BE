@@ -1,0 +1,37 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Your payment was not successful. ❌
+  p
+    | We attempted to process a payment for your 
+    strong= planName
+    | subscription but it failed.
+  
+  table.table(style='width: 100%; margin: 20px 0;')
+    tbody
+      tr
+        td Subscription Plan:
+        td
+          strong= planName
+      tr
+        td Amount:
+        td
+          strong ₦#{(amount / 100).toLocaleString()}
+      tr
+        td Date:
+        td= new Date(paymentDate).toLocaleDateString()
+      tr
+        td Reason:
+        td= failureReason || 'Payment failed'
+  
+  p Please update your payment method and try again to avoid service interruption.
+  
+  p
+    a(href=`${baseUrl}/dashboard/subscriptions` style='background-color: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;') Try Payment Again
+  
+  p If you need help or have questions about your payment, please contact our support team.
+  
+  p Best regards,
+  br
+  | The AutoPadi Team

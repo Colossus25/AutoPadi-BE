@@ -3,6 +3,7 @@ import { StoreService } from '../service/store.service';
 import { CreateStoreDto } from '../dto/create-store.dto';
 import { JoiValidationPipe } from '@/pipes/joi.validation.pipe';
 import { AuthGuard } from '@/guards';
+import { SubscriptionGuard } from '@/modules/subscriptions/guards/subscription.guard';
 import { UserRequest } from '@/definitions';
 import { Response } from 'express';
 import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
@@ -18,9 +19,10 @@ export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
     @Post()
+    @UseGuards(SubscriptionGuard)
     @UsePipes(new JoiValidationPipe(createStoreValidation))
     async createStore(@Body() dto: CreateStoreDto, @Req() req: UserRequest, @Res() res: Response) {
-        const store = await this.storeService.createStore(dto, req.user);
+        const store = await this.storeService.createStore(dto, req.user, req.user_subscription);
         return res.status(HttpStatus.CREATED).json({ success: true, data: store });
     }
 

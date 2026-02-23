@@ -1,8 +1,9 @@
 import type { Request } from "express";
 import { User } from "./modules/auth/entities/user.entity";
 import { SuperAdmin } from "./modules/superadmin/entities/super-admin.entity";
+import { UserSubscription } from "./modules/subscriptions/entities/user-subscription.entity";
 
-export type UserRequest = Request & { user: User };
+export type UserRequest = Request & { user: User; user_subscription?: UserSubscription };
 
 export type SuperAdminRequest = Request & { user: SuperAdmin}
 

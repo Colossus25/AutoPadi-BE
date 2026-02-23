@@ -1,0 +1,32 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Great news! Your subscription has been renewed successfully! ✅
+  p
+    | Your 
+    strong= planName
+    | subscription is now active and ready to use.
+  
+  table.table(style='width: 100%; margin: 20px 0;')
+    tbody
+      tr
+        td Subscription Plan:
+        td
+          strong= planName
+      tr
+        td Renewal Date:
+        td= new Date(renewalDate).toLocaleDateString()
+      tr
+        td New Expiry Date:
+        td= new Date(newExpiryDate).toLocaleDateString()
+      tr
+        td Amount Charged:
+        td
+          strong ₦#{(amount / 100).toLocaleString()}
+  
+  p Your subscription will automatically renew on the renewal date unless you choose to cancel.
+  p
+    a(href=`${baseUrl}/dashboard/subscriptions` style='background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;') View Subscription Details
+  
+  p Thank you for your continued loyalty!

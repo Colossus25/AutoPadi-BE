@@ -3,6 +3,7 @@ import { DriverProfileService } from '../service/driver-profile.service';
 import { CreateDriverProfileDto } from '../dto/create-driver-profile.dto';
 import { JoiValidationPipe } from '@/pipes/joi.validation.pipe';
 import { AuthGuard } from '@/guards';
+import { SubscriptionGuard } from '@/modules/subscriptions/guards/subscription.guard';
 import { UserRequest } from '@/definitions';
 import { Response } from 'express';
 import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
@@ -18,9 +19,10 @@ export class DriverProfileController {
   constructor(private readonly driverProfileService: DriverProfileService) {}
 
   @Post()
+  @UseGuards(SubscriptionGuard)
   @UsePipes(new JoiValidationPipe(createDriverProfileValidation))
   async createDriverProfile(@Body() dto: CreateDriverProfileDto, @Req() req: UserRequest, @Res() res: Response) {
-    const driverProfile = await this.driverProfileService.createDriverProfile(dto, req.user);
+    const driverProfile = await this.driverProfileService.createDriverProfile(dto, req.user, req.user_subscription);
     return res.status(HttpStatus.CREATED).json({ success: true, data: driverProfile });
   }
 
@@ -55,5 +57,11 @@ export class DriverProfileController {
   async deleteDriverProfile(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
     const result = await this.driverProfileService.deleteDriverProfile(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, ...result });
+  }
+
+  @Get('matching/jobs')
+  async getMatchedJobs(@Req() req: UserRequest, @Res() res: Response, @Query() pagination: PaginationDto) {
+    const result = await this.driverProfileService.getMatchedJobs(req.user, pagination);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 }

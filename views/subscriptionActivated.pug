@@ -1,0 +1,31 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Your subscription has been activated! 🎉
+  p
+    | You now have access to 
+    strong= planName
+    | .
+  
+  table.table(style='width: 100%; margin: 20px 0;')
+    tbody
+      tr
+        td Subscription Plan:
+        td
+          strong= planName
+      tr
+        td Start Date:
+        td= new Date(subscriptionStartDate).toLocaleDateString()
+      tr
+        td End Date:
+        td= new Date(subscriptionEndDate).toLocaleDateString()
+      tr
+        td Status:
+        td
+          strong ACTIVE
+  
+  p You can now create and manage your resources on the platform.
+  p If you have any questions, feel free to contact our support team.
+  
+  p Thank you for choosing AutoPadi!

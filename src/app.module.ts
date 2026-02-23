@@ -30,6 +30,7 @@ import { BookingModule } from "./modules/booking/booking.module";
 import { DriverModule } from "./modules/driver/driver.module";
 import { DriverEmployerModule } from "./modules/driver-employer/driver-employer.module";
 import { MessagingModule } from "./modules/messaging/messaging.module";
+import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module";
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { MessagingModule } from "./modules/messaging/messaging.module";
     ScheduledTaskModule,
     CacheContainerModule,
     SuperadminModule,
+    SubscriptionsModule,
   ],
   providers: [JwtService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
