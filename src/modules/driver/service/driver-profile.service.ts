@@ -100,7 +100,8 @@ export class DriverProfileService {
     }
 
     // Start building query for jobs - will apply soft filters (suggestions, not requirements)
-    let query = this.driverJobRepository.createQueryBuilder('job');
+    let query = this.driverJobRepository.createQueryBuilder('job')
+      .leftJoinAndSelect('job.created_by', 'created_by');
     let hasFilters = false;
 
     // Apply filters as soft suggestions (using OR logic to always return results)
@@ -162,6 +163,7 @@ export class DriverProfileService {
     // If we have fewer than requested limit, fetch more without filters to ensure minimum results
     if (jobs.length < Math.min(limit, 10)) {
       const allJobsQuery = this.driverJobRepository.createQueryBuilder('job')
+        .leftJoinAndSelect('job.created_by', 'created_by')
         .orderBy('job.created_at', 'DESC')
         .skip(skip)
         .take(limit);

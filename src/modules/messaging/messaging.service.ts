@@ -52,19 +52,56 @@ export class MessagingService {
     const { page, limit } = pagination;
     const skip = (page - 1) * limit;
 
+    // Get all conversations for this user using a simpler query
     const [conversations, total] = await this.conversationRepository
       .createQueryBuilder('c')
-      .leftJoinAndSelect('c.participants', 'p')
-      .leftJoinAndSelect('p.user', 'u')
-      .leftJoinAndSelect('c.messages', 'm', 'm.created_at = (SELECT MAX(m2.created_at) FROM messages m2 WHERE m2.conversation_id = c.id)')
-      .where('p.user_id = :userId', { userId: user.id })
+      .innerJoin('c.participants', 'p', 'p.user_id = :userId', { userId: user.id })
+      .leftJoinAndSelect('c.participants', 'allParticipants')
+      .leftJoinAndSelect('allParticipants.user', 'u')
+      .leftJoinAndSelect('c.messages', 'm')
       .orderBy('c.updated_at', 'DESC')
       .skip(skip)
       .take(limit)
       .getManyAndCount();
 
+    // For each conversation, add receiver and unread_count
+    const data = await Promise.all(conversations.map(async (conv) => {
+      // Find the receiver participant (not the current user)
+      const receiverParticipant = conv.participants.find(p => p.user_id !== user.id);
+      const receiver = receiverParticipant ? receiverParticipant.user : null;
+
+      // Count unread messages for this conversation for the current user
+      // (messages sent by the other person that current user hasn't read)
+      const unread_count = await this.messageRepository.count({
+        where: {
+          conversation_id: conv.id,
+          is_read: false,
+          sender_id: receiver?.id,
+        },
+      });
+
+      // Get the last message
+      const lastMessage = conv.messages && conv.messages.length > 0 
+        ? conv.messages[conv.messages.length - 1] 
+        : null;
+
+      // Only include the receiver in participants for clarity
+      return {
+        id: conv.id,
+        context_type: conv.context_type,
+        context_id: conv.context_id,
+        status: conv.status,
+        created_at: conv.created_at,
+        updated_at: conv.updated_at,
+        receiver,
+        unread_count,
+        messages: lastMessage ? [lastMessage] : [],
+        participants: receiverParticipant ? [receiverParticipant] : [],
+      };
+    }));
+
     return {
-      data: conversations,
+      data,
       page,
       limit,
       total,
@@ -161,7 +198,15 @@ export class MessagingService {
       .getOne();
 
     if (existingConversation) {
-      return existingConversation;
+      // Always reload with participants.user relation
+      const fullConversation = await this.conversationRepository.findOne({
+        where: { id: existingConversation.id },
+        relations: ['participants', 'participants.user'],
+      });
+      if (!fullConversation) {
+        throw new NotFoundException('Conversation not found');
+      }
+      return fullConversation;
     }
 
     // Create new conversation

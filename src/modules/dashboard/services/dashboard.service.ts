@@ -273,6 +273,7 @@ export class DashboardService {
 
       const [driverJobs, total] = await this.driverJobRepository
         .createQueryBuilder('driver_job')
+        .leftJoinAndSelect('driver_job.created_by', 'created_by')
         .orderBy('driver_job.created_at', 'DESC')
         .skip(skip)
         .take(limit)
