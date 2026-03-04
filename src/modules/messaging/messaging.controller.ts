@@ -84,8 +84,10 @@ export class MessagingController {
     return {
       status_code: 200,
       message: 'Conversation retrieved successfully',
-      data: result.conversation,
-      messages: result.messages,
+      data: {
+        ...result.conversation,
+        messages: result.messages,
+      },
       meta: {
         page: result.page,
         limit: result.limit,
