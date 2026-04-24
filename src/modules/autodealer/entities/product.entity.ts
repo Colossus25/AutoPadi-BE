@@ -52,6 +52,12 @@ export class Product {
   @Column({ nullable: true })
   fuel: string;
 
+  @Column({ type: 'int', default: 0 })
+  clicks_count: number;
+
+  @Column({ type: 'int', default: 0 })
+  enquiries_count: number;
+
   @ManyToOne(() => Store, (store) => store.products, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'store_id' })
   store: Store;

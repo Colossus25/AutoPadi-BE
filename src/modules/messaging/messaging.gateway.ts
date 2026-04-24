@@ -205,6 +205,45 @@ export class MessagingGateway
     }
   }
 
+  @SubscribeMessage('message:delete')
+  async handleDeleteMessage(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { conversation_id: string; message_id: string },
+  ) {
+    if (!socket.user) {
+      socket.emit('error', { message: 'User not authenticated' });
+      return;
+    }
+
+    const { conversation_id, message_id } = data;
+
+    try {
+      const message = await this.messagingService.deleteMessage(
+        message_id,
+        socket.user,
+      );
+
+      this.emitMessageDeleted(conversation_id, message.id, message.deleted_at);
+    } catch (err) {
+      socket.emit('error', {
+        message: 'Failed to delete message',
+        error: (err as Error).message,
+      });
+    }
+  }
+
+  emitMessageDeleted(
+    conversationId: string,
+    messageId: string,
+    deletedAt: Date | null,
+  ) {
+    this.server.to(`conversation:${conversationId}`).emit('message:deleted', {
+      conversation_id: conversationId,
+      message_id: messageId,
+      deleted_at: deletedAt,
+    });
+  }
+
   @SubscribeMessage('typing:start')
   handleTypingStart(
     @ConnectedSocket() socket: AuthenticatedSocket,

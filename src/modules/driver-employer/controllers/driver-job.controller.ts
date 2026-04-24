@@ -59,6 +59,18 @@ export class DriverJobController {
     return res.status(HttpStatus.OK).json({ success: true, ...result });
   }
 
+  @Post(':id/view')
+  async trackView(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.driverJobService.trackView(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
+  @Post(':id/click')
+  async trackClick(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.driverJobService.trackClick(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
   @Get(':id/matching/drivers')
   async getMatchedDrivers(
     @Param('id') id: number,

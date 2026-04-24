@@ -61,7 +61,17 @@ export class StoreService {
             throw new ForbiddenException('You can only view your own stores');
         }
 
-        return store;
+        return {
+            ...store,
+            total_views: store.views_count,
+        };
+    }
+
+    async trackView(id: number) {
+        const store = await this.storeRepository.findOne({ where: { id } });
+        if (!store) throw new NotFoundException('Store not found');
+        await this.storeRepository.increment({ id }, 'views_count', 1);
+        return { id, views_count: store.views_count + 1 };
     }
 
     async updateStore(id: number, dto: CreateStoreDto, user: User) {

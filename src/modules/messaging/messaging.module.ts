@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   Conversation,
   ConversationParticipant,
+  ConversationReport,
   Message,
 } from './entities';
 import { MessagingService } from './messaging.service';
@@ -11,7 +12,12 @@ import { MessagingGateway } from './messaging.gateway';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Conversation, ConversationParticipant, Message]),
+    TypeOrmModule.forFeature([
+      Conversation,
+      ConversationParticipant,
+      ConversationReport,
+      Message,
+    ]),
   ],
   providers: [MessagingService, MessagingGateway],
   controllers: [MessagingController],

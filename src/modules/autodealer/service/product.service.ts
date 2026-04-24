@@ -76,7 +76,25 @@ export class ProductService {
             throw new ForbiddenException('You can only view your own products');
         }
 
-        return product;
+        return {
+            ...product,
+            total_clicks: product.clicks_count,
+            total_enquiries: product.enquiries_count,
+        };
+    }
+
+    async trackClick(id: number) {
+        const product = await this.productRepository.findOne({ where: { id } });
+        if (!product) throw new NotFoundException('Product not found');
+        await this.productRepository.increment({ id }, 'clicks_count', 1);
+        return { id, clicks_count: product.clicks_count + 1 };
+    }
+
+    async trackEnquiry(id: number) {
+        const product = await this.productRepository.findOne({ where: { id } });
+        if (!product) throw new NotFoundException('Product not found');
+        await this.productRepository.increment({ id }, 'enquiries_count', 1);
+        return { id, enquiries_count: product.enquiries_count + 1 };
     }
 
     async updateProduct(id: number, dto: CreateProductDto, user: User) {

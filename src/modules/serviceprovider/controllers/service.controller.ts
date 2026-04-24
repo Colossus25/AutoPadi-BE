@@ -58,4 +58,22 @@ export class ServiceController {
     const result = await this.serviceService.deleteService(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, ...result });
   }
+
+  @Post(':id/view')
+  async trackView(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.serviceService.trackView(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
+  @Post(':id/click')
+  async trackClick(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.serviceService.trackClick(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
+  @Post(':id/enquiry')
+  async trackEnquiry(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.serviceService.trackEnquiry(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
 }

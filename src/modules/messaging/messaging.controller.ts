@@ -13,14 +13,17 @@ import {
   
 } from '@nestjs/common';
 import { MessagingService } from './messaging.service';
+import { MessagingGateway } from './messaging.gateway';
 import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
 import {
   CreateConversationDto,
+  ReportConversationDto,
   SendMessageDto,
   UpdateConversationDto,
 } from './dtos';
 import {
   createConversationValidation,
+  reportConversationValidation,
   sendMessageValidation,
   updateConversationValidation,
 } from './validations';
@@ -34,7 +37,10 @@ import type { UserRequest } from '@/definitions';
 @Controller('messaging')
 @UseGuards(AuthGuard)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) {}
+  constructor(
+    private readonly messagingService: MessagingService,
+    private readonly messagingGateway: MessagingGateway,
+  ) {}
 
   /**
    * Get all conversations for authenticated user
@@ -203,6 +209,58 @@ export class MessagingController {
       status_code: 200,
       message: 'Unread count retrieved',
       data: { unread_count: count },
+    };
+  }
+
+  /**
+   * Report a conversation for abuse (spam, harassment, etc.)
+   * POST /messaging/conversations/:conversationId/report
+   * Body: { reason: string, description?: string, message_id?: string }
+   */
+  @Post('conversations/:conversationId/report')
+  async reportConversation(
+    @Param('conversationId', new ParseUUIDPipe()) conversationId: string,
+    @Body(new JoiValidationPipe(reportConversationValidation))
+    dto: ReportConversationDto,
+    @Req() req: UserRequest,
+  ) {
+    const report = await this.messagingService.reportConversation(
+      conversationId,
+      dto,
+      req.user,
+    );
+
+    return {
+      status_code: 201,
+      message: 'Conversation reported successfully',
+      data: report,
+    };
+  }
+
+  /**
+   * Soft-delete a message (sender-only)
+   * DELETE /messaging/messages/:messageId
+   */
+  @Delete('messages/:messageId')
+  async deleteMessage(
+    @Param('messageId', new ParseUUIDPipe()) messageId: string,
+    @Req() req: UserRequest,
+  ) {
+    const message = await this.messagingService.deleteMessage(
+      messageId,
+      req.user,
+    );
+
+    this.messagingGateway.emitMessageDeleted(
+      message.conversation_id,
+      message.id,
+      message.deleted_at,
+    );
+
+    return {
+      status_code: 200,
+      message: 'Message deleted successfully',
+      data: message,
     };
   }
 

@@ -1,8 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SendMessageDto {
-  @ApiProperty({ example: 'Hey, how are you?', required: true, description: 'Message text content' })
-  text: string;
+  @ApiProperty({
+    example: 'Hey, how are you?',
+    required: false,
+    description: 'Message text content. Optional if attachments are provided.',
+  })
+  text?: string;
 
   @ApiProperty({
     example: [

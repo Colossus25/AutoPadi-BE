@@ -54,6 +54,9 @@ export class Store {
   @Column({ nullable: true })
   user_subscription_id: number;
 
+  @Column({ type: 'int', default: 0 })
+  views_count: number;
+
   @ManyToOne(() => UserSubscription, { eager: true, nullable: true })
   @JoinColumn({ name: 'user_subscription_id' })
   user_subscription: UserSubscription;

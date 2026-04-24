@@ -57,7 +57,33 @@ export class ServiceService {
     if (service.created_by.id !== user.id) {
       throw new ForbiddenException('You can only view your own services');
     }
-    return service;
+    return {
+      ...service,
+      total_views: service.views_count,
+      total_clicks: service.clicks_count,
+      total_enquiries: service.enquiries_count,
+    };
+  }
+
+  async trackView(id: number) {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) throw new NotFoundException('Service not found');
+    await this.serviceRepository.increment({ id }, 'views_count', 1);
+    return { id, views_count: service.views_count + 1 };
+  }
+
+  async trackClick(id: number) {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) throw new NotFoundException('Service not found');
+    await this.serviceRepository.increment({ id }, 'clicks_count', 1);
+    return { id, clicks_count: service.clicks_count + 1 };
+  }
+
+  async trackEnquiry(id: number) {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) throw new NotFoundException('Service not found');
+    await this.serviceRepository.increment({ id }, 'enquiries_count', 1);
+    return { id, enquiries_count: service.enquiries_count + 1 };
   }
 
   async updateService(id: number, dto: CreateServiceDto, user: User) {

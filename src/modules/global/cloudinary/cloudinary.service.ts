@@ -17,8 +17,14 @@ export class CloudinaryService {
     if (!files || files.length < 1) return [];
     const uploadPromises = files.map(async (file) => {
       return new Promise((resolve, reject) => {
+        const mimetype = file.mimetype || '';
+        let resource_type: 'image' | 'video' | 'raw' | 'auto' = 'auto';
+        if (mimetype.startsWith('image/')) resource_type = 'image';
+        else if (mimetype.startsWith('video/') || mimetype.startsWith('audio/')) resource_type = 'video';
+        else if (mimetype) resource_type = 'raw';
+
         const uploadStream = cloudinary.v2.uploader.upload_stream(
-          { resource_type: 'auto' },
+          { resource_type, filename_override: file.originalname, use_filename: true, unique_filename: true },
           (error, result) => {
             if (error) return reject(error);
 

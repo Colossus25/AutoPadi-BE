@@ -13,10 +13,14 @@ import { DriverProfile } from '@/modules/driver/entities/driver-profile.entity';
 import { DriverJob } from '@/modules/driver-employer/entities/driver-job.entity';
 import { ProductAttribute } from '@/modules/superadmin/entities/product-attribute.entity';
 import { ServiceAttribute } from '@/modules/superadmin/entities/service-attribute.entity';
+import { DriverEmployerModule } from '@/modules/driver-employer/driver-employer.module';
+import { DriverModule } from '@/modules/driver/driver.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Banner, Store, Product, Service, DriverProfile, DriverJob, ProductAttribute, ServiceAttribute]),
+    DriverEmployerModule,
+    DriverModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService, BannerService, StoreService, ProductService], 

@@ -23,8 +23,8 @@ export class Message {
   @Column('integer')
   sender_id: number;
 
-  @Column({ type: 'text' })
-  text: string;
+  @Column({ type: 'text', nullable: true })
+  text: string | null;
 
   @Column({ type: 'json', nullable: true })
   attachments: Array<{
@@ -37,6 +37,9 @@ export class Message {
 
   @Column({ type: 'timestamp', nullable: true })
   read_at: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deleted_at: Date | null;
 
   @CreateDateColumn()
   created_at: Date;

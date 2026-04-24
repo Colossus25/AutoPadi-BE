@@ -5,10 +5,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import {
   Conversation,
   ConversationParticipant,
+  ConversationReport,
   Message,
   ConversationContextType,
   ConversationStatus,
@@ -16,6 +17,7 @@ import {
 import { User } from '@/modules/auth/entities/user.entity';
 import {
   CreateConversationDto,
+  ReportConversationDto,
   SendMessageDto,
   UpdateConversationDto,
 } from './dtos';
@@ -34,11 +36,18 @@ export class MessagingService {
     private readonly participantRepository: Repository<ConversationParticipant>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
+    @InjectRepository(ConversationReport)
+    private readonly conversationReportRepository: Repository<ConversationReport>,
   ) {}
 
   /**
    * Get all conversations for a user with pagination
    */
+  private sanitizeDeleted(message: Message): Message {
+    if (!message.deleted_at) return message;
+    return { ...message, text: null, attachments: null } as Message;
+  }
+
   async getUserConversations(
     user: User,
     pagination: PaginationDto,
@@ -77,12 +86,14 @@ export class MessagingService {
           conversation_id: conv.id,
           is_read: false,
           sender_id: receiver?.id,
+          deleted_at: IsNull(),
         },
       });
 
-      // Get the last message
-      const lastMessage = conv.messages && conv.messages.length > 0 
-        ? conv.messages[conv.messages.length - 1] 
+      // Get the last message (excluding soft-deleted ones for preview purposes)
+      const visibleMessages = (conv.messages || []).filter((m) => !m.deleted_at);
+      const lastMessage = visibleMessages.length > 0
+        ? visibleMessages[visibleMessages.length - 1]
         : null;
 
       // Only include the receiver in participants for clarity
@@ -95,7 +106,7 @@ export class MessagingService {
         updated_at: conv.updated_at,
         receiver,
         unread_count,
-        messages: lastMessage ? [lastMessage] : [],
+        messages: lastMessage ? [this.sanitizeDeleted(lastMessage)] : [],
         participants: receiverParticipant ? [receiverParticipant] : [],
       };
     }));
@@ -166,7 +177,7 @@ export class MessagingService {
 
     return {
       conversation,
-      messages: messages.reverse(), // Return in chronological order
+      messages: messages.reverse().map((m) => this.sanitizeDeleted(m)), // chronological + mask deleted
       page,
       limit,
       total,
@@ -278,8 +289,8 @@ export class MessagingService {
     const message = this.messageRepository.create({
       conversation_id: conversationId,
       sender_id: user.id,
-      text: dto.text,
-      attachments: dto.attachments || null,
+      text: dto.text?.trim() ? dto.text : null,
+      attachments: dto.attachments?.length ? dto.attachments : null,
     });
 
     const savedMessage = await this.messageRepository.save(message);
@@ -387,6 +398,43 @@ export class MessagingService {
   }
 
   /**
+   * Soft-delete a message. Only the sender can delete their own message.
+   * The row is kept so the thread stays coherent; text/attachments are cleared
+   * on reads via sanitizeDeleted, and clients render a placeholder from deleted_at.
+   */
+  async deleteMessage(messageId: string, user: User): Promise<Message> {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+
+    if (message.sender_id !== user.id) {
+      throw new ForbiddenException('You can only delete your own messages');
+    }
+
+    if (!message.deleted_at) {
+      await this.messageRepository.update(
+        { id: messageId },
+        { deleted_at: new Date() },
+      );
+    }
+
+    const updated = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: ['sender'],
+    });
+
+    if (!updated) {
+      throw new NotFoundException('Message not found');
+    }
+
+    return this.sanitizeDeleted(updated);
+  }
+
+  /**
    * Get unread message count for user across all conversations
    */
   async getUnreadCount(user: User): Promise<number> {
@@ -397,9 +445,80 @@ export class MessagingService {
       .where('p.user_id = :userId', { userId: user.id })
       .andWhere('m.sender_id != :userId', { userId: user.id })
       .andWhere('m.is_read = false')
+      .andWhere('m.deleted_at IS NULL')
       .getCount();
 
     return count;
+  }
+
+  /**
+   * Report a conversation for abuse. The reporter must be a participant; the
+   * reported user is the other participant. An optional message_id can pin
+   * the report to a specific message for context.
+   */
+  async reportConversation(
+    conversationId: string,
+    dto: ReportConversationDto,
+    user: User,
+  ): Promise<ConversationReport> {
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: conversationId },
+      relations: ['participants'],
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    const reporter = conversation.participants.find(
+      (p) => p.user_id === user.id,
+    );
+    if (!reporter) {
+      throw new ForbiddenException(
+        'You are not a participant in this conversation',
+      );
+    }
+
+    const other = conversation.participants.find(
+      (p) => p.user_id !== user.id,
+    );
+    if (!other) {
+      throw new BadRequestException(
+        'Conversation has no other participant to report',
+      );
+    }
+
+    if (dto.message_id) {
+      const message = await this.messageRepository.findOne({
+        where: { id: dto.message_id, conversation_id: conversationId },
+      });
+      if (!message) {
+        throw new NotFoundException(
+          'Message not found in this conversation',
+        );
+      }
+    }
+
+    const report = this.conversationReportRepository.create({
+      conversation_id: conversationId,
+      reporter_id: user.id,
+      reported_user_id: other.user_id,
+      message_id: dto.message_id || null,
+      reason: dto.reason,
+      description: dto.description?.trim() ? dto.description : null,
+    });
+
+    const saved = await this.conversationReportRepository.save(report);
+
+    const result = await this.conversationReportRepository.findOne({
+      where: { id: saved.id },
+    });
+
+    if (!result) {
+      throw new NotFoundException('Report not found');
+    }
+
+    return result;
   }
 
   /**

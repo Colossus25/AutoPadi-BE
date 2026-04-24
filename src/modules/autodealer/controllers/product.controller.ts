@@ -54,4 +54,16 @@ export class ProductController {
         const result = await this.productService.deleteProduct(id, req.user);
         return res.status(HttpStatus.OK).json({ success: true, ...result });
     }
+
+    @Post(':id/click')
+    async trackClick(@Param('id') id: number, @Res() res: Response) {
+        const result = await this.productService.trackClick(id);
+        return res.status(HttpStatus.OK).json({ success: true, data: result });
+    }
+
+    @Post(':id/enquiry')
+    async trackEnquiry(@Param('id') id: number, @Res() res: Response) {
+        const result = await this.productService.trackEnquiry(id);
+        return res.status(HttpStatus.OK).json({ success: true, data: result });
+    }
 }

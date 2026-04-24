@@ -56,4 +56,10 @@ export class StoreController {
         const result = await this.storeService.deleteStore(id, req.user);
         return res.status(HttpStatus.OK).json({ success: true, ...result });
     }
+
+    @Post(':id/view')
+    async trackView(@Param('id') id: number, @Res() res: Response) {
+        const result = await this.storeService.trackView(id);
+        return res.status(HttpStatus.OK).json({ success: true, data: result });
+    }
 }

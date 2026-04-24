@@ -60,7 +60,76 @@ export class DriverProfileService {
     if (driverProfile.created_by.id !== user.id) {
       throw new ForbiddenException('You can only view your own driver profile');
     }
-    return driverProfile;
+
+    const total_matches = await this.countMatchedJobs(driverProfile);
+
+    return {
+      ...driverProfile,
+      total_views: driverProfile.views_count,
+      total_clicks: driverProfile.clicks_count,
+      total_matches,
+    };
+  }
+
+  async trackView(id: number) {
+    const profile = await this.driverProfileRepository.findOne({ where: { id } });
+    if (!profile) throw new NotFoundException('Driver profile not found');
+    await this.driverProfileRepository.increment({ id }, 'views_count', 1);
+    return { id, views_count: profile.views_count + 1 };
+  }
+
+  async trackClick(id: number) {
+    const profile = await this.driverProfileRepository.findOne({ where: { id } });
+    if (!profile) throw new NotFoundException('Driver profile not found');
+    await this.driverProfileRepository.increment({ id }, 'clicks_count', 1);
+    return { id, clicks_count: profile.clicks_count + 1 };
+  }
+
+  /**
+   * Count driver jobs that match this profile using the same soft-filter rules
+   * as getMatchedJobs (without the minimum-results fallback), so the number
+   * reflects a real match count.
+   */
+  async countMatchedJobs(profile: DriverProfile): Promise<number> {
+    let query = this.driverJobRepository.createQueryBuilder('job');
+    const conditions: string[] = [];
+    const params: Record<string, any> = {};
+
+    if (profile.type_of_vehicles && profile.type_of_vehicles.length > 0) {
+      const vehicleConditions = profile.type_of_vehicles
+        .map((_, idx) => `job.type_of_vehicles LIKE :vehicle${idx}`)
+        .join(' OR ');
+      conditions.push(`(${vehicleConditions})`);
+      profile.type_of_vehicles.forEach((vehicle, idx) => {
+        params[`vehicle${idx}`] = `%${vehicle}%`;
+      });
+    }
+
+    if (profile.years_of_experience !== null && profile.years_of_experience !== undefined) {
+      conditions.push('(job.driver_years_of_experience IS NULL OR job.driver_years_of_experience <= :driverExp)');
+      params['driverExp'] = profile.years_of_experience;
+    }
+
+    if (profile.gender) {
+      conditions.push('(job.driver_gender IS NULL OR job.driver_gender = :driverGender)');
+      params['driverGender'] = profile.gender;
+    }
+
+    if (profile.valid_driver_license) {
+      conditions.push('(job.valid_driver_license IS NULL OR job.valid_driver_license = :hasLicense)');
+      params['hasLicense'] = true;
+    }
+
+    if (profile.level_of_education) {
+      conditions.push('(job.driver_level_of_education IS NULL OR job.driver_level_of_education = :eduLevel)');
+      params['eduLevel'] = profile.level_of_education;
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(conditions.join(' AND '), params);
+    }
+
+    return query.getCount();
   }
 
   async updateDriverProfile(id: number, dto: CreateDriverProfileDto, user: User) {

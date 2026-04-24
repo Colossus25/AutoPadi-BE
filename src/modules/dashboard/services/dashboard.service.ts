@@ -13,6 +13,8 @@ import { SearchDto } from '../dto/search.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
+import { DriverJobService } from '@/modules/driver-employer/service/driver-job.service';
+import { DriverProfileService } from '@/modules/driver/service/driver-profile.service';
 
 @Injectable()
 export class DashboardService {
@@ -32,6 +34,8 @@ export class DashboardService {
     private readonly productAttributeRepository: Repository<ProductAttribute>,
     @InjectRepository(ServiceAttribute)
     private readonly serviceAttributeRepository: Repository<ServiceAttribute>,
+    private readonly driverJobService: DriverJobService,
+    private readonly driverProfileService: DriverProfileService,
   ) {}
 
     async search(filters: SearchDto, pagination: PaginationDto) {
@@ -214,6 +218,7 @@ export class DashboardService {
       return {
         ...store,
         products,
+        total_views: store.views_count,
       };
     }
 
@@ -245,6 +250,7 @@ export class DashboardService {
 
       const [drivers, total] = await this.driverProfileRepository
         .createQueryBuilder('driver')
+        .leftJoinAndSelect('driver.created_by', 'created_by')
         .orderBy('driver.created_at', 'DESC')
         .skip(skip)
         .take(limit)
@@ -264,7 +270,15 @@ export class DashboardService {
     async getDriverById(id: number) {
       const driver = await this.driverProfileRepository.findOne({ where: { id } });
       if (!driver) throw new NotFoundException('Driver profile not found');
-      return driver;
+
+      const total_matches = await this.driverProfileService.countMatchedJobs(driver);
+
+      return {
+        ...driver,
+        total_views: driver.views_count,
+        total_clicks: driver.clicks_count,
+        total_matches,
+      };
     }
 
     async getAllDriverJobs(pagination: PaginationDto) {
@@ -293,13 +307,26 @@ export class DashboardService {
     async getDriverJobById(id: number) {
       const driverJob = await this.driverJobRepository.findOne({ where: { id } });
       if (!driverJob) throw new NotFoundException('Driving job not found');
-      return driverJob;
+
+      const total_matches = await this.driverJobService.countMatchedDrivers(driverJob);
+
+      return {
+        ...driverJob,
+        total_views: driverJob.views_count,
+        total_clicks: driverJob.clicks_count,
+        total_matches,
+      };
     }
 
     async getServiceById(id: number) {
       const service = await this.serviceRepository.findOne({ where: { id } });
       if (!service) throw new NotFoundException('Service not found');
-      return service;
+      return {
+        ...service,
+        total_views: service.views_count,
+        total_clicks: service.clicks_count,
+        total_enquiries: service.enquiries_count,
+      };
     }
 
     async getAllProducts(pagination: PaginationDto) {
@@ -328,7 +355,11 @@ export class DashboardService {
       const product = await this.productRepository.findOne({ where: { id } });
       if (!product) throw new NotFoundException('Product not found');
 
-      return product;
+      return {
+        ...product,
+        total_clicks: product.clicks_count,
+        total_enquiries: product.enquiries_count,
+      };
     }
 
     getAllStates() {

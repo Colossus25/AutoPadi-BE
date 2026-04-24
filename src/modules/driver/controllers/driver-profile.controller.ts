@@ -64,4 +64,16 @@ export class DriverProfileController {
     const result = await this.driverProfileService.getMatchedJobs(req.user, pagination);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
+
+  @Post(':id/view')
+  async trackView(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.driverProfileService.trackView(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
+  @Post(':id/click')
+  async trackClick(@Param('id') id: number, @Res() res: Response) {
+    const result = await this.driverProfileService.trackClick(id);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
 }

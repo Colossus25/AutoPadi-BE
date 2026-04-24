@@ -61,6 +61,12 @@ export class DriverJob {
   @Column({ nullable: true })
   user_subscription_id: number;
 
+  @Column({ type: 'int', default: 0 })
+  views_count: number;
+
+  @Column({ type: 'int', default: 0 })
+  clicks_count: number;
+
   @ManyToOne(() => UserSubscription, { eager: true, nullable: true })
   @JoinColumn({ name: 'user_subscription_id' })
   user_subscription: UserSubscription;

@@ -60,7 +60,94 @@ export class DriverJobService {
     if (driverJob.created_by.id !== user.id) {
       throw new ForbiddenException('You can only view your own driving jobs');
     }
-    return driverJob;
+
+    const total_matches = await this.countMatchedDrivers(driverJob);
+
+    return {
+      ...driverJob,
+      total_views: driverJob.views_count,
+      total_clicks: driverJob.clicks_count,
+      total_matches,
+    };
+  }
+
+  async trackView(id: number) {
+    const job = await this.driverJobRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException('Driving job not found');
+    await this.driverJobRepository.increment({ id }, 'views_count', 1);
+    return { id, views_count: job.views_count + 1 };
+  }
+
+  async trackClick(id: number) {
+    const job = await this.driverJobRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException('Driving job not found');
+    await this.driverJobRepository.increment({ id }, 'clicks_count', 1);
+    return { id, clicks_count: job.clicks_count + 1 };
+  }
+
+  /**
+   * Count drivers whose profile matches this job's criteria.
+   * Uses the same soft-filter rules as getMatchedDrivers but without the
+   * "minimum results" fallback, so the number reflects a real match count.
+   */
+  async countMatchedDrivers(job: DriverJob): Promise<number> {
+    let query = this.driverProfileRepository.createQueryBuilder('driver');
+    const conditions: string[] = [];
+    const params: Record<string, any> = {};
+
+    if (job.type_of_vehicles && job.type_of_vehicles.length > 0) {
+      const vehicleConditions = job.type_of_vehicles
+        .map((_, idx) => `driver.type_of_vehicles LIKE :vehicle${idx}`)
+        .join(' OR ');
+      conditions.push(`(${vehicleConditions})`);
+      job.type_of_vehicles.forEach((vehicle, idx) => {
+        params[`vehicle${idx}`] = `%${vehicle}%`;
+      });
+    }
+
+    if (job.driver_years_of_experience !== null && job.driver_years_of_experience !== undefined) {
+      conditions.push('(driver.years_of_experience >= :requiredExp)');
+      params['requiredExp'] = job.driver_years_of_experience;
+    }
+
+    if (job.driver_gender) {
+      conditions.push('(driver.gender = :gender OR driver.gender IS NULL)');
+      params['gender'] = job.driver_gender;
+    }
+
+    if (job.driver_age) {
+      conditions.push('(driver.age BETWEEN :minAge AND :maxAge OR driver.age IS NULL)');
+      params['minAge'] = job.driver_age - 5;
+      params['maxAge'] = job.driver_age + 5;
+    }
+
+    if (job.valid_driver_license) {
+      conditions.push('(driver.valid_driver_license IS NOT NULL)');
+    }
+
+    if (job.driver_level_of_education) {
+      conditions.push('(driver.level_of_education = :eduLevel OR driver.level_of_education IS NULL)');
+      params['eduLevel'] = job.driver_level_of_education;
+    }
+
+    if (job.driver_marital_status) {
+      conditions.push('(driver.marital_status = :maritalStatus OR driver.marital_status IS NULL)');
+      params['maritalStatus'] = job.driver_marital_status;
+    }
+
+    if (job.driver_must_reside_in_state) {
+      const addressParts = job.address?.split(',') || [];
+      const jobState = addressParts[addressParts.length - 1]?.trim() || 'Lagos';
+      conditions.push('(driver.open_to_relocation = :relocation OR driver.address LIKE :jobState OR driver.relocation_state LIKE :jobState)');
+      params['relocation'] = true;
+      params['jobState'] = `%${jobState}%`;
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(conditions.join(' AND '), params);
+    }
+
+    return query.getCount();
   }
 
   async updateDriverJob(id: number, dto: CreateDriverJobDto, user: User) {
