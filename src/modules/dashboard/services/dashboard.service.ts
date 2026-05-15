@@ -228,6 +228,7 @@ export class DashboardService {
 
       const [services, total] = await this.serviceRepository
         .createQueryBuilder('service')
+        .leftJoinAndSelect('service.created_by', 'created_by')
         .orderBy('service.created_at', 'DESC')
         .skip(skip)
         .take(limit)
