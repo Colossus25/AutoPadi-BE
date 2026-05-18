@@ -5,10 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DriverJob } from './entities/driver-job.entity';
 import { DriverProfile } from '@/modules/driver/entities/driver-profile.entity';
 import { SubscriptionsModule } from '@/modules/subscriptions/subscriptions.module';
+import { AnalyticsModule } from '@/modules/analytics/analytics.module';
 
 @Module({
   imports: [
     SubscriptionsModule,
+    AnalyticsModule,
     TypeOrmModule.forFeature([DriverJob, DriverProfile])
   ],
   providers: [DriverJobService],

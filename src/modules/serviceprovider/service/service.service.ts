@@ -5,12 +5,18 @@ import { Service, ServiceStatus } from '../entities/service.entity';
 import { CreateServiceDto } from '../dto/create-service.dto';
 import { User } from '@/modules/auth/entities/user.entity';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
+import { AnalyticsService } from '@/modules/analytics/services/analytics.service';
+import {
+  AnalyticsEventType,
+  AnalyticsResourceType,
+} from '@/modules/analytics/entities/analytics-event.entity';
 
 @Injectable()
 export class ServiceService {
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async createService(dto: CreateServiceDto, user: User, userSubscription?: any) {
@@ -65,25 +71,52 @@ export class ServiceService {
     };
   }
 
-  async trackView(id: number) {
+  async trackView(id: number, user: User) {
     const service = await this.serviceRepository.findOne({ where: { id } });
     if (!service) throw new NotFoundException('Service not found');
     await this.serviceRepository.increment({ id }, 'views_count', 1);
+    await this.analyticsService.logEvent({
+      resource_type: AnalyticsResourceType.SERVICE,
+      resource_id: id,
+      event_type: AnalyticsEventType.VIEW,
+      user_id: user.id,
+    });
     return { id, views_count: service.views_count + 1 };
   }
 
-  async trackClick(id: number) {
+  async trackClick(id: number, user: User) {
     const service = await this.serviceRepository.findOne({ where: { id } });
     if (!service) throw new NotFoundException('Service not found');
     await this.serviceRepository.increment({ id }, 'clicks_count', 1);
+    await this.analyticsService.logEvent({
+      resource_type: AnalyticsResourceType.SERVICE,
+      resource_id: id,
+      event_type: AnalyticsEventType.CLICK,
+      user_id: user.id,
+    });
     return { id, clicks_count: service.clicks_count + 1 };
   }
 
-  async trackEnquiry(id: number) {
+  async trackEnquiry(id: number, user: User) {
     const service = await this.serviceRepository.findOne({ where: { id } });
     if (!service) throw new NotFoundException('Service not found');
     await this.serviceRepository.increment({ id }, 'enquiries_count', 1);
+    await this.analyticsService.logEvent({
+      resource_type: AnalyticsResourceType.SERVICE,
+      resource_id: id,
+      event_type: AnalyticsEventType.ENQUIRY,
+      user_id: user.id,
+    });
     return { id, enquiries_count: service.enquiries_count + 1 };
+  }
+
+  async getAnalytics(user: User) {
+    const services = await this.serviceRepository.find({
+      where: { created_by: { id: user.id } },
+      select: ['id'],
+    });
+    const ids = services.map((s) => s.id);
+    return this.analyticsService.getMonthlyStats(AnalyticsResourceType.SERVICE, ids);
   }
 
   async updateService(id: number, dto: CreateServiceDto, user: User) {

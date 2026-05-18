@@ -6,11 +6,13 @@ import { DriverProfile } from './entities/driver-profile.entity';
 import { DriverJob } from '@/modules/driver-employer/entities/driver-job.entity';
 import { SubscriptionsModule } from '@/modules/subscriptions/subscriptions.module';
 import { DriverEmployerModule } from '@/modules/driver-employer/driver-employer.module';
+import { AnalyticsModule } from '@/modules/analytics/analytics.module';
 
 @Module({
   imports: [
     SubscriptionsModule,
     DriverEmployerModule,
+    AnalyticsModule,
     TypeOrmModule.forFeature([DriverProfile, DriverJob])
   ],
   providers: [DriverProfileService],

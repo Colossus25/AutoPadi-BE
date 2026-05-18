@@ -6,12 +6,18 @@ import { CreateStoreDto } from '../dto/create-store.dto';
 import { User } from '@/modules/auth/entities/user.entity';
 import { ForbiddenException } from '@nestjs/common';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
+import { AnalyticsService } from '@/modules/analytics/services/analytics.service';
+import {
+  AnalyticsEventType,
+  AnalyticsResourceType,
+} from '@/modules/analytics/entities/analytics-event.entity';
 
 @Injectable()
 export class StoreService {
   constructor(
     @InjectRepository(Store)
     private readonly storeRepository: Repository<Store>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
     async createStore(dto: CreateStoreDto, user: User, userSubscription?: any) {
@@ -67,11 +73,26 @@ export class StoreService {
         };
     }
 
-    async trackView(id: number) {
+    async trackView(id: number, user: User) {
         const store = await this.storeRepository.findOne({ where: { id } });
         if (!store) throw new NotFoundException('Store not found');
         await this.storeRepository.increment({ id }, 'views_count', 1);
+        await this.analyticsService.logEvent({
+            resource_type: AnalyticsResourceType.STORE,
+            resource_id: id,
+            event_type: AnalyticsEventType.VIEW,
+            user_id: user.id,
+        });
         return { id, views_count: store.views_count + 1 };
+    }
+
+    async getAnalytics(user: User) {
+        const stores = await this.storeRepository.find({
+            where: { created_by: { id: user.id } },
+            select: ['id'],
+        });
+        const ids = stores.map((s) => s.id);
+        return this.analyticsService.getMonthlyStats(AnalyticsResourceType.STORE, ids);
     }
 
     async updateStore(id: number, dto: CreateStoreDto, user: User) {

@@ -6,6 +6,11 @@ import { DriverJob } from '@/modules/driver-employer/entities/driver-job.entity'
 import { CreateDriverProfileDto } from '../dto/create-driver-profile.dto';
 import { User } from '@/modules/auth/entities/user.entity';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
+import { AnalyticsService } from '@/modules/analytics/services/analytics.service';
+import {
+  AnalyticsEventType,
+  AnalyticsResourceType,
+} from '@/modules/analytics/entities/analytics-event.entity';
 
 @Injectable()
 export class DriverProfileService {
@@ -14,6 +19,7 @@ export class DriverProfileService {
     private readonly driverProfileRepository: Repository<DriverProfile>,
     @InjectRepository(DriverJob)
     private readonly driverJobRepository: Repository<DriverJob>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async createDriverProfile(dto: CreateDriverProfileDto, user: User, userSubscription?: any) {
@@ -71,18 +77,39 @@ export class DriverProfileService {
     };
   }
 
-  async trackView(id: number) {
+  async trackView(id: number, user: User) {
     const profile = await this.driverProfileRepository.findOne({ where: { id } });
     if (!profile) throw new NotFoundException('Driver profile not found');
     await this.driverProfileRepository.increment({ id }, 'views_count', 1);
+    await this.analyticsService.logEvent({
+      resource_type: AnalyticsResourceType.DRIVER,
+      resource_id: id,
+      event_type: AnalyticsEventType.VIEW,
+      user_id: user.id,
+    });
     return { id, views_count: profile.views_count + 1 };
   }
 
-  async trackClick(id: number) {
+  async trackClick(id: number, user: User) {
     const profile = await this.driverProfileRepository.findOne({ where: { id } });
     if (!profile) throw new NotFoundException('Driver profile not found');
     await this.driverProfileRepository.increment({ id }, 'clicks_count', 1);
+    await this.analyticsService.logEvent({
+      resource_type: AnalyticsResourceType.DRIVER,
+      resource_id: id,
+      event_type: AnalyticsEventType.CLICK,
+      user_id: user.id,
+    });
     return { id, clicks_count: profile.clicks_count + 1 };
+  }
+
+  async getAnalytics(user: User) {
+    const profiles = await this.driverProfileRepository.find({
+      where: { created_by: { id: user.id } },
+      select: ['id'],
+    });
+    const ids = profiles.map((p) => p.id);
+    return this.analyticsService.getMonthlyStats(AnalyticsResourceType.DRIVER, ids);
   }
 
   /**

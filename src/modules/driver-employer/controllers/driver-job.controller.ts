@@ -32,6 +32,12 @@ export class DriverJobController {
     return res.status(HttpStatus.OK).json({ success: true, data: driverJobs });
   }
 
+  @Get('analytics')
+  async getAnalytics(@Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.driverJobService.getAnalytics(req.user);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
   @Get(':id')
   async getDriverJob(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
     const driverJob = await this.driverJobService.getDriverJobById(id, req.user);
@@ -60,14 +66,14 @@ export class DriverJobController {
   }
 
   @Post(':id/view')
-  async trackView(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.driverJobService.trackView(id);
+  async trackView(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.driverJobService.trackView(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 
   @Post(':id/click')
-  async trackClick(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.driverJobService.trackClick(id);
+  async trackClick(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.driverJobService.trackClick(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 

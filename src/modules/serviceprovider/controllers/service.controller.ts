@@ -32,6 +32,12 @@ export class ServiceController {
     return res.status(HttpStatus.OK).json({ success: true, data: services });
   }
 
+  @Get('analytics')
+  async getAnalytics(@Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.serviceService.getAnalytics(req.user);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
   @Get(':id')
   async getService(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
     const service = await this.serviceService.getServiceById(id, req.user);
@@ -60,20 +66,20 @@ export class ServiceController {
   }
 
   @Post(':id/view')
-  async trackView(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.serviceService.trackView(id);
+  async trackView(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.serviceService.trackView(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 
   @Post(':id/click')
-  async trackClick(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.serviceService.trackClick(id);
+  async trackClick(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.serviceService.trackClick(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 
   @Post(':id/enquiry')
-  async trackEnquiry(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.serviceService.trackEnquiry(id);
+  async trackEnquiry(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.serviceService.trackEnquiry(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 }

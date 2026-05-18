@@ -7,10 +7,12 @@ import { ProductService } from './service/product.service';
 import { ProductController } from './controllers/product.controller';
 import { Product } from './entities/product.entity';
 import { SubscriptionsModule } from '@/modules/subscriptions/subscriptions.module';
+import { AnalyticsModule } from '@/modules/analytics/analytics.module';
 
 @Module({
   imports: [
     SubscriptionsModule,
+    AnalyticsModule,
     TypeOrmModule.forFeature([
       Store,
       Product,

@@ -30,6 +30,12 @@ export class ProductController {
         return res.status(HttpStatus.OK).json({ success: true, data: products });
     }
 
+    @Get('analytics')
+    async getAnalytics(@Req() req: UserRequest, @Res() res: Response) {
+        const result = await this.productService.getAnalytics(req.user);
+        return res.status(HttpStatus.OK).json({ success: true, data: result });
+    }
+
     @Get(':id')
     async getProduct(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
         const product = await this.productService.getProductById(id, req.user);
@@ -56,14 +62,14 @@ export class ProductController {
     }
 
     @Post(':id/click')
-    async trackClick(@Param('id') id: number, @Res() res: Response) {
-        const result = await this.productService.trackClick(id);
+    async trackClick(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+        const result = await this.productService.trackClick(id, req.user);
         return res.status(HttpStatus.OK).json({ success: true, data: result });
     }
 
     @Post(':id/enquiry')
-    async trackEnquiry(@Param('id') id: number, @Res() res: Response) {
-        const result = await this.productService.trackEnquiry(id);
+    async trackEnquiry(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+        const result = await this.productService.trackEnquiry(id, req.user);
         return res.status(HttpStatus.OK).json({ success: true, data: result });
     }
 }

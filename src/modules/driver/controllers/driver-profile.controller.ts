@@ -32,6 +32,12 @@ export class DriverProfileController {
     return res.status(HttpStatus.OK).json({ success: true, data: driverProfiles });
   }
 
+  @Get('analytics')
+  async getAnalytics(@Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.driverProfileService.getAnalytics(req.user);
+    return res.status(HttpStatus.OK).json({ success: true, data: result });
+  }
+
   @Get(':id')
   async getDriverProfile(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
     const driverProfile = await this.driverProfileService.getDriverProfileById(id, req.user);
@@ -66,14 +72,14 @@ export class DriverProfileController {
   }
 
   @Post(':id/view')
-  async trackView(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.driverProfileService.trackView(id);
+  async trackView(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.driverProfileService.trackView(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 
   @Post(':id/click')
-  async trackClick(@Param('id') id: number, @Res() res: Response) {
-    const result = await this.driverProfileService.trackClick(id);
+  async trackClick(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+    const result = await this.driverProfileService.trackClick(id, req.user);
     return res.status(HttpStatus.OK).json({ success: true, data: result });
   }
 }

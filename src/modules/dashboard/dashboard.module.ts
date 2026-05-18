@@ -15,12 +15,14 @@ import { ProductAttribute } from '@/modules/superadmin/entities/product-attribut
 import { ServiceAttribute } from '@/modules/superadmin/entities/service-attribute.entity';
 import { DriverEmployerModule } from '@/modules/driver-employer/driver-employer.module';
 import { DriverModule } from '@/modules/driver/driver.module';
+import { AnalyticsModule } from '@/modules/analytics/analytics.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Banner, Store, Product, Service, DriverProfile, DriverJob, ProductAttribute, ServiceAttribute]),
     DriverEmployerModule,
     DriverModule,
+    AnalyticsModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService, BannerService, StoreService, ProductService], 

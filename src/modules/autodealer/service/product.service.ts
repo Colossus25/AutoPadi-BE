@@ -7,6 +7,11 @@ import { User } from '@/modules/auth/entities/user.entity';
 import { ForbiddenException } from '@nestjs/common';
 import { Store } from '../entities/store.entity';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
+import { AnalyticsService } from '@/modules/analytics/services/analytics.service';
+import {
+  AnalyticsEventType,
+  AnalyticsResourceType,
+} from '@/modules/analytics/entities/analytics-event.entity';
 
 @Injectable()
 export class ProductService {
@@ -15,6 +20,7 @@ export class ProductService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Store)
     private readonly storeRepository: Repository<Store>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
     async createProduct(dto: CreateProductDto, user: User) {
@@ -83,18 +89,39 @@ export class ProductService {
         };
     }
 
-    async trackClick(id: number) {
+    async trackClick(id: number, user: User) {
         const product = await this.productRepository.findOne({ where: { id } });
         if (!product) throw new NotFoundException('Product not found');
         await this.productRepository.increment({ id }, 'clicks_count', 1);
+        await this.analyticsService.logEvent({
+            resource_type: AnalyticsResourceType.PRODUCT,
+            resource_id: id,
+            event_type: AnalyticsEventType.CLICK,
+            user_id: user.id,
+        });
         return { id, clicks_count: product.clicks_count + 1 };
     }
 
-    async trackEnquiry(id: number) {
+    async trackEnquiry(id: number, user: User) {
         const product = await this.productRepository.findOne({ where: { id } });
         if (!product) throw new NotFoundException('Product not found');
         await this.productRepository.increment({ id }, 'enquiries_count', 1);
+        await this.analyticsService.logEvent({
+            resource_type: AnalyticsResourceType.PRODUCT,
+            resource_id: id,
+            event_type: AnalyticsEventType.ENQUIRY,
+            user_id: user.id,
+        });
         return { id, enquiries_count: product.enquiries_count + 1 };
+    }
+
+    async getAnalytics(user: User) {
+        const products = await this.productRepository.find({
+            where: { created_by: { id: user.id } },
+            select: ['id'],
+        });
+        const ids = products.map((p) => p.id);
+        return this.analyticsService.getMonthlyStats(AnalyticsResourceType.PRODUCT, ids);
     }
 
     async updateProduct(id: number, dto: CreateProductDto, user: User) {

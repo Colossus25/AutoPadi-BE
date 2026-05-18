@@ -32,6 +32,12 @@ export class StoreController {
         return res.status(HttpStatus.OK).json({ success: true, data: stores });
     }
 
+    @Get('analytics')
+    async getAnalytics(@Req() req: UserRequest, @Res() res: Response) {
+        const result = await this.storeService.getAnalytics(req.user);
+        return res.status(HttpStatus.OK).json({ success: true, data: result });
+    }
+
     @Get(':id')
     async getStore(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
         const store = await this.storeService.getStoreById(id, req.user);
@@ -58,8 +64,8 @@ export class StoreController {
     }
 
     @Post(':id/view')
-    async trackView(@Param('id') id: number, @Res() res: Response) {
-        const result = await this.storeService.trackView(id);
+    async trackView(@Param('id') id: number, @Req() req: UserRequest, @Res() res: Response) {
+        const result = await this.storeService.trackView(id, req.user);
         return res.status(HttpStatus.OK).json({ success: true, data: result });
     }
 }
