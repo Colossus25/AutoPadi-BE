@@ -16,7 +16,10 @@ export class Notification {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata: any;
 
-  //Used for read at
+  // Null = unread. Set when the user reads the notification.
+  @Column({ type: 'timestamp', nullable: true })
+  read_at?: Date | null;
+
   @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at?: Date | null;
 

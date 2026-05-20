@@ -19,6 +19,7 @@ import {
   PublicModule,
   ScheduledTaskModule,
   AuthModule,
+  NotificationsModule,
 } from "./modules";
 import { ConfigModuleSchema } from "./validations";
 import { DashboardModule } from "./modules/dashboard/dashboard.module";
@@ -82,6 +83,7 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
     SuperadminModule,
     SubscriptionsModule,
     AnalyticsModule,
+    NotificationsModule,
   ],
   providers: [JwtService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

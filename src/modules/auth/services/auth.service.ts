@@ -19,6 +19,7 @@ import {
   UnprocessableEntityException,
 } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { NotificationEvent } from "@/modules/notifications/notification-events";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
@@ -194,6 +195,9 @@ export class AuthService extends BaseService {
     ).sendPasswordResetSuccessEmail();
 
     this.userRepository.update({ id }, { remember_token: null });
+
+    this.eventEmitter.emit(NotificationEvent.PASSWORD_CHANGED, { userId: id });
+
     return { message: "Password reset." };
   }
 

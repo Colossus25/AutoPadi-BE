@@ -5,7 +5,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { IsNull, Not, Repository } from 'typeorm';
+import { NotificationEvent } from '@/modules/notifications/notification-events';
 import {
   Conversation,
   ConversationParticipant,
@@ -38,6 +40,7 @@ export class MessagingService {
     private readonly messageRepository: Repository<Message>,
     @InjectRepository(ConversationReport)
     private readonly conversationReportRepository: Repository<ConversationReport>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -308,6 +311,21 @@ export class MessagingService {
 
     if (!result) {
       throw new NotFoundException('Message not found');
+    }
+
+    // Notify the other participants (push only; the subscriber skips anyone
+    // currently online since they receive the message live over the socket).
+    const others = await this.participantRepository.find({
+      where: { conversation_id: conversationId, user_id: Not(user.id) },
+    });
+    if (others.length) {
+      this.eventEmitter.emit(NotificationEvent.MESSAGE_SENT, {
+        recipientIds: others.map((p) => p.user_id),
+        senderId: user.id,
+        senderName: [user.first_name, user.last_name].filter(Boolean).join(' ') || undefined,
+        conversationId,
+        preview: result.text ?? (result.attachments?.length ? 'Sent an attachment' : undefined),
+      });
     }
 
     return result;

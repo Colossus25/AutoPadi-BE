@@ -40,6 +40,9 @@ export const appConfig = {
     ? process.env.SWAGGER_PASSWORD
     : "secret",
 
+  // Base64-encoded Firebase service account JSON (for FCM push notifications)
+  FIREBASE_SERVICE_ACCOUNT: process.env.FIREBASE_SERVICE_ACCOUNT,
+
   // REDIS_HOST: process.env.REDIS_HOST,
   // REDIS_PORT: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
   // REDIS_PASSWORD: process.env.REDIS_PASSWORD,

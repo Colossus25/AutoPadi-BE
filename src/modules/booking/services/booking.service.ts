@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
+import { NotificationEvent } from '@/modules/notifications/notification-events';
 import { Booking } from '../entities/booking.entity';
 import { BookingReview } from '../entities/booking-review.entity';
 import { BookingReport } from '../entities/booking-report.entity';
@@ -20,6 +22,7 @@ export class BookingService {
     private readonly reportRepository: Repository<BookingReport>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createBooking(dto: CreateBookingDto, user: User) {
@@ -40,7 +43,15 @@ export class BookingService {
       estimated_cost: dto.estimated_cost,
     });
 
-    return await this.bookingRepository.save(booking);
+    const saved = await this.bookingRepository.save(booking);
+
+    this.eventEmitter.emit(NotificationEvent.BOOKING_CREATED, {
+      providerId: service.created_by.id,
+      bookingId: saved.id,
+      serviceName: service.name,
+    });
+
+    return saved;
   }
 
   async getUserBookings(user: User, pagination: PaginationDto, status?: string) {
@@ -132,7 +143,17 @@ export class BookingService {
     if (dto.declined_reason) booking.declined_reason = dto.declined_reason;
     if (dto.cancelled_reason) booking.cancelled_reason = dto.cancelled_reason;
 
-    return await this.bookingRepository.save(booking);
+    const saved = await this.bookingRepository.save(booking);
+
+    this.eventEmitter.emit(NotificationEvent.BOOKING_STATUS_CHANGED, {
+      customerId: booking.user.id,
+      bookingId: booking.id,
+      status: booking.status,
+      serviceName: booking.service?.name,
+      reason: dto.declined_reason || dto.cancelled_reason,
+    });
+
+    return saved;
   }
 
   async cancelBooking(id: number, user: User, reason?: string) {
@@ -151,7 +172,16 @@ export class BookingService {
       booking.cancelled_reason = reason;
     }
 
-    return await this.bookingRepository.save(booking);
+    const saved = await this.bookingRepository.save(booking);
+
+    this.eventEmitter.emit(NotificationEvent.BOOKING_CANCELLED, {
+      providerId: booking.service_provider.id,
+      bookingId: booking.id,
+      serviceName: booking.service?.name,
+      reason,
+    });
+
+    return saved;
   }
 
   async addReview(bookingId: number, dto: CreateReviewDto, user: User) {
@@ -180,7 +210,15 @@ export class BookingService {
       comment: dto.comment,
     });
 
-    return await this.reviewRepository.save(review);
+    const saved = await this.reviewRepository.save(review);
+
+    this.eventEmitter.emit(NotificationEvent.BOOKING_REVIEWED, {
+      providerId: booking.service_provider.id,
+      bookingId: booking.id,
+      rating: dto.rating,
+    });
+
+    return saved;
   }
 
   async addReport(bookingId: number, dto: CreateReportDto, user: User) {

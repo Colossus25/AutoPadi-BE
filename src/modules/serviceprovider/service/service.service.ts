@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
+import { NotificationEvent } from '@/modules/notifications/notification-events';
 import { Service, ServiceStatus } from '../entities/service.entity';
 import { CreateServiceDto } from '../dto/create-service.dto';
 import { User } from '@/modules/auth/entities/user.entity';
@@ -17,6 +19,7 @@ export class ServiceService {
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
     private readonly analyticsService: AnalyticsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createService(dto: CreateServiceDto, user: User, userSubscription?: any) {
@@ -195,7 +198,15 @@ export class ServiceService {
     }
 
     service.status = ServiceStatus.APPROVED;
-    return await this.serviceRepository.save(service);
+    const saved = await this.serviceRepository.save(service);
+
+    this.eventEmitter.emit(NotificationEvent.SERVICE_APPROVED, {
+      providerId: service.created_by.id,
+      serviceId: service.id,
+      serviceName: service.name,
+    });
+
+    return saved;
   }
 
   /**
@@ -211,6 +222,15 @@ export class ServiceService {
     if (reason) {
       service.rejection_reason = reason;
     }
-    return await this.serviceRepository.save(service);
+    const saved = await this.serviceRepository.save(service);
+
+    this.eventEmitter.emit(NotificationEvent.SERVICE_REJECTED, {
+      providerId: service.created_by.id,
+      serviceId: service.id,
+      serviceName: service.name,
+      reason,
+    });
+
+    return saved;
   }
 }

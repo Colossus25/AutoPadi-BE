@@ -29,6 +29,8 @@ export const ConfigModuleSchema = Joi.object({
   CLOUDINARYAPIKEY: Joi.string().required(),
   CLOUDINARYAPISECRET: Joi.string().required(),
   SWAGGER_PASSWORD: Joi.string().required(),
+  // Optional so the app still boots in environments without push configured
+  FIREBASE_SERVICE_ACCOUNT: Joi.string().allow(null, "").optional(),
   // REDIS_HOST: Joi.string().required(),
   // REDIS_PORT: Joi.string().allow(null, ""),
   // REDIS_PASSWORD: Joi.string().allow(null, ""),

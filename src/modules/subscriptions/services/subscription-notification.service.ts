@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
+import { NotificationEvent } from '@/modules/notifications/notification-events';
 import { User } from '@/modules/auth/entities/user.entity';
 import { UserSubscription, UserSubscriptionStatus } from '../entities/user-subscription.entity';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
@@ -22,6 +24,7 @@ export class SubscriptionNotificationService {
   constructor(
     @InjectRepository(UserSubscription)
     private readonly userSubscriptionRepository: Repository<UserSubscription>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -42,6 +45,12 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Subscription activated email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.SUBSCRIPTION_ACTIVATED, {
+        userId: user.id,
+        planName: subscription.subscription_plan?.name,
+        endDate: subscription.subscription_end_date?.toLocaleDateString(),
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send subscription activated email to ${user.email}: ${error.message}`,
@@ -65,6 +74,13 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Subscription expiring warning email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.SUBSCRIPTION_EXPIRING_SOON, {
+        userId: user.id,
+        planName: subscription.subscription_plan?.name,
+        endDate: subscription.subscription_end_date?.toLocaleDateString(),
+        daysLeft,
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send subscription expiring warning email to ${user.email}: ${error.message}`,
@@ -83,6 +99,12 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Subscription expired email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.SUBSCRIPTION_EXPIRED, {
+        userId: user.id,
+        planName: subscription.subscription_plan?.name,
+        endDate: subscription.subscription_end_date?.toLocaleDateString(),
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send subscription expired email to ${user.email}: ${error.message}`,
@@ -103,6 +125,12 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Subscription renewed email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.SUBSCRIPTION_RENEWED, {
+        userId: user.id,
+        planName: subscription.subscription_plan?.name,
+        endDate: subscription.subscription_end_date?.toLocaleDateString(),
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send subscription renewed email to ${user.email}: ${error.message}`,
@@ -122,6 +150,12 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Subscription renewal failed email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.SUBSCRIPTION_RENEWAL_FAILED, {
+        userId: user.id,
+        planName: subscription.subscription_plan?.name,
+        reason,
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send subscription renewal failed email to ${user.email}: ${error.message}`,
@@ -142,6 +176,13 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Payment failed email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.PAYMENT_FAILED, {
+        userId: user.id,
+        amount: payment.amount / 100 || 0,
+        reference: payment.paystack_reference,
+        reason,
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send payment failed email to ${user.email}: ${error.message}`,
@@ -163,6 +204,12 @@ export class SubscriptionNotificationService {
       });
 
       this.logger.log(`Payment success email sent to ${user.email}`);
+
+      this.eventEmitter.emit(NotificationEvent.PAYMENT_SUCCESSFUL, {
+        userId: user.id,
+        amount: payment.amount / 100 || 0,
+        reference: payment.paystack_reference,
+      });
     } catch (error) {
       this.logger.error(
         `Failed to send payment success email to ${user.email}: ${error.message}`,

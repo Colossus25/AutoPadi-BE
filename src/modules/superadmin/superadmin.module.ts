@@ -18,6 +18,7 @@ import { ServiceAttributeService } from './service/service-attribute.service';
 import { ServiceAttributeController } from './controllers/service-attribute.controller';
 import { ServiceApprovalController } from './controllers/service-approval.controller';
 import { ServiceProviderModule } from '@/modules/serviceprovider/serviceprovider.module';
+import { SuperadminNotificationController } from './controllers/notification.controller';
 
 
 @Module({
@@ -34,7 +35,7 @@ import { ServiceProviderModule } from '@/modules/serviceprovider/serviceprovider
     ServiceProviderModule,
   ],
   providers: [SuperadminService, SuperGroupService, BannerService, ProductAttributeService, ServiceAttributeService],
-  controllers: [SuperadminController, BannerController, ProductAttributeController, ServiceAttributeController, ServiceApprovalController],
+  controllers: [SuperadminController, BannerController, ProductAttributeController, ServiceAttributeController, ServiceApprovalController, SuperadminNotificationController],
   exports: [SuperadminService]
 })
 export class SuperadminModule {}

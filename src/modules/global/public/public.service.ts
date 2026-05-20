@@ -5,14 +5,17 @@ import { EmailService } from "@/core/utils";
 import { User } from "@/modules/auth/entities/user.entity";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Repository } from "typeorm";
+import { NotificationEvent } from "@/modules/notifications/notification-events";
 import { ConfirmUserEmailDto } from "./dto";
 
 @Injectable()
 export class PublicService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   async confirmUserEmail(confirmUserEmailDto: ConfirmUserEmailDto) {
@@ -28,6 +31,8 @@ export class PublicService {
       { id: user.id },
       { email_verified_at: new Date().toISOString(), remember_token: null }
     );
+
+    this.eventEmitter.emit(NotificationEvent.EMAIL_VERIFIED, { userId: user.id });
 
     await new EmailService(
       { email },
