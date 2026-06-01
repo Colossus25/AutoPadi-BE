@@ -134,8 +134,17 @@ export class BookingService {
       throw new ForbiddenException('Only the service provider can update booking status');
     }
 
-    if (booking.status !== 'pending') {
-      throw new BadRequestException('Booking can only be updated from pending status');
+    const allowedTransitions: Record<string, string[]> = {
+      pending: ['scheduled', 'cancelled'],
+      scheduled: ['completed', 'cancelled'],
+      completed: [],
+      cancelled: [],
+    };
+
+    if (!allowedTransitions[booking.status]?.includes(dto.status)) {
+      throw new BadRequestException(
+        `Cannot change booking status from '${booking.status}' to '${dto.status}'`,
+      );
     }
 
     booking.status = dto.status;
