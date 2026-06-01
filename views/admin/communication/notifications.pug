@@ -1,0 +1,69 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  -
+    function fmtDate(d) { return d ? new Date(d).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'; }
+    function userName(u) { if (!u) return '—'; var n = ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); return n || u.email || ('User #' + u.id); }
+    function titleOf(n) { return n.metadata && n.metadata.title ? n.metadata.title : ''; }
+    function buildHref(page) {
+      var qs = ['page=' + page];
+      if (tagFilter) qs.push('tag=' + encodeURIComponent(tagFilter));
+      return '/admin/communication/notifications?' + qs.join('&');
+    }
+
+  div
+    //- Header
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Communication
+        h1.text-2xl.font-bold.text-gray-900 Communication Center
+        p.text-gray-500.mt-1 Every in-app and push notification delivered, newest first.
+
+    include _tabs
+    include ../partials/flash
+
+    //- Tag filter chips
+    if tags.length
+      .flex.flex-wrap.items-center.gap-2.mb-4
+        span.text-sm.text-gray-500 Filter by tag:
+        a.text-sm.rounded-full.border(class=(tagFilter === null ? 'bg-primary-600 text-white border-primary-600 px-3 py-1' : 'border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-1') href='/admin/communication/notifications') All
+        each t in tags
+          - var isActive = (tagFilter === t)
+          a.text-sm.rounded-full.border(class=(isActive ? 'bg-primary-600 text-white border-primary-600 px-3 py-1' : 'border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-1') href=`/admin/communication/notifications?tag=${encodeURIComponent(t)}`)= t
+
+    //- Table
+    if notifications.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="bell" class="w-10 h-10 mb-3")
+        p.text-sm No notifications match this filter.
+    else
+      .bg-white.rounded-xl.border.border-gray-200.overflow-hidden
+        table.w-full.text-sm
+          thead.bg-gray-50.text-gray-500
+            tr
+              th.text-left.font-medium(class="px-4 py-3") Recipient
+              th.text-left.font-medium(class="px-4 py-3") Title
+              th.text-left.font-medium(class="px-4 py-3") Message
+              th.text-left.font-medium(class="px-4 py-3") Tag
+              th.text-left.font-medium(class="px-4 py-3") Read
+              th.text-left.font-medium(class="px-4 py-3") Sent
+          tbody.divide-y.divide-gray-100
+            each n in notifications
+              tr(class="hover:bg-gray-50")
+                td.text-gray-700(class="px-4 py-3")= userName(n.user)
+                td.text-gray-900.font-medium(class="px-4 py-3")= titleOf(n) || '—'
+                td.text-gray-700(class="px-4 py-3 max-w-md truncate" title=n.message)= n.message
+                td.text-xs(class="px-4 py-3")
+                  span.rounded.bg-gray-100.text-gray-700(class="px-2 py-0.5")= n.tag
+                td(class="px-4 py-3")
+                  if n.read_at
+                    +statusPill('success', 'read')
+                  else
+                    +statusPill('pending', 'unread')
+                td.text-xs.text-gray-500(class="px-4 py-3")= fmtDate(n.created_at)
+
+    +pagination(pagination, buildHref)

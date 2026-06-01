@@ -49,7 +49,8 @@ export class SuperadminService {
 
     // Create default SuperAdmin if not exists
     async createDefaultSuperAdmin() {
-        const existing = await this.superAdminRepository.findOne({ where: { email: 'superadmin@address.com' } });
+        const DEFAULT_EMAIL = 'superadmin@gmail.com';
+        const existing = await this.superAdminRepository.findOne({ where: { email: DEFAULT_EMAIL } });
         if (existing) return existing;
 
         // Create permissions
@@ -76,7 +77,7 @@ export class SuperadminService {
         const superAdmin = this.superAdminRepository.create({
             first_name: 'super',
             last_name: 'admin',
-            email: 'superadmin@gmail.com',
+            email: DEFAULT_EMAIL,
             password,
             super_role: [role],
         });
@@ -125,19 +126,24 @@ export class SuperadminService {
 
         if (createAdminDto.super_role_ids && createAdminDto.super_role_ids.length > 0) {
             roles = await this.superRolesRepository.find({
-                where: {id: In(roles)}
+                where: { id: In(createAdminDto.super_role_ids) }
             })
         }
 
         let groups: SuperGroup[] = []
         if (createAdminDto.super_group_ids && createAdminDto.super_group_ids.length > 0) {
             groups = await this.superGroupRepository.find({
-                where: {id: In(groups)}
+                where: { id: In(createAdminDto.super_group_ids) }
             })
         }
 
+        // Drop the FK arrays before spreading the DTO into create() — they
+        // aren't entity columns and TypeORM would silently ignore them, but
+        // it's clearer to omit them explicitly.
+        const { super_role_ids: _r, super_group_ids: _g, ...rest } = createAdminDto;
+
         const superAdmin = this.superAdminRepository.create({
-            ...createAdminDto,
+            ...rest,
             password: password,
             super_role: roles,
             super_group: groups

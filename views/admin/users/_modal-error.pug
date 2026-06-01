@@ -1,0 +1,10 @@
+//- Error fragment swapped into #user-modal-mount when the htmx fetch fails.
+div(x-data="{ open: true }")
+  div(x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+    .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="open = false; document.getElementById('user-modal-mount').innerHTML = ''")
+    .relative.bg-white.rounded-xl.shadow-xl.w-full.p-6(class="max-w-md mx-4")
+      .flex.items-start.justify-between.mb-2
+        h3.text-lg.font-semibold.text-gray-900 Could not load profile
+        button.text-gray-400(type="button" "@click"="open = false; document.getElementById('user-modal-mount').innerHTML = ''")
+          i(data-lucide="x" class="w-5 h-5")
+      p.text-sm.text-gray-600= message

@@ -1,0 +1,37 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= (typeof title !== 'undefined' ? title + ' · ' : '') + 'Autopadi Admin'
+    //- Tailwind (Play CDN) with the dashboard's design tokens
+    script(src="https://cdn.tailwindcss.com")
+    script.
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#2563EB', 50: '#EFF4FF', 100: '#DBE7FF', 500: '#2F6BFF',
+                600: '#2563EB', 700: '#1D4FD7'
+              }
+            },
+            fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
+          }
+        }
+      }
+    link(rel="preconnect" href="https://fonts.googleapis.com")
+    link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet")
+    //- Lucide icons, htmx, Alpine
+    script(src="https://unpkg.com/lucide@latest")
+    script(src="https://unpkg.com/htmx.org@1.9.12")
+    script(defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js")
+    script(src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js")
+    link(rel="stylesheet" href="/assets/admin/css/admin.css")
+  body.bg-gray-50.font-sans.text-gray-900.antialiased
+    block body
+    script(src="/assets/admin/js/admin.js")
+    script.
+      document.addEventListener('DOMContentLoaded', () => window.lucide && lucide.createIcons());
+      document.body.addEventListener('htmx:afterSwap', () => window.lucide && lucide.createIcons());

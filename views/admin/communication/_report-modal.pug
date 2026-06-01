@@ -1,0 +1,68 @@
+include ../mixins/ui
+
+-
+  function fmtDate(d) { return d ? new Date(d).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'; }
+  function userName(u) { if (!u) return 'Deleted user'; var n = ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); return n || u.email || ('User #' + u.id); }
+
+div(x-data="{ open: true }" x-init="$nextTick(() => window.lucide && lucide.createIcons())")
+  div(x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+    .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="open = false; document.getElementById('report-modal-mount').innerHTML = ''")
+    .relative.bg-white.rounded-xl.shadow-xl.w-full.overflow-hidden(class="max-w-2xl mx-4 max-h-[90vh] flex flex-col")
+      //- Header
+      .flex.items-start.justify-between.border-b.border-gray-100(class="px-6 py-4")
+        div
+          h3.text-lg.font-semibold.text-gray-900 Conversation Report
+          p.text-sm.text-gray-500 #{fmtDate(report.created_at)}
+        button.text-gray-400(type="button" "@click"="open = false; document.getElementById('report-modal-mount').innerHTML = ''")
+          i(data-lucide="x" class="w-5 h-5")
+
+      //- Body
+      .overflow-y-auto.flex-1(class="px-6 py-4 space-y-5")
+        .grid.gap-y-3.gap-x-6(class="grid-cols-1 sm:grid-cols-2")
+          div
+            p.text-xs.text-gray-500 Reporter
+            p.text-sm.text-gray-900.font-medium= userName(report.reporter)
+            if report.reporter && report.reporter.email
+              p.text-xs.text-gray-500= report.reporter.email
+          div
+            p.text-xs.text-gray-500 Reported user
+            p.text-sm.text-gray-900.font-medium= userName(report.reported_user)
+            if report.reported_user && report.reported_user.email
+              p.text-xs.text-gray-500= report.reported_user.email
+          div
+            p.text-xs.text-gray-500 Reason
+            p.text-sm.text-gray-900= report.reason.replace(/_/g, ' ')
+          div
+            p.text-xs.text-gray-500 Status
+            p.text-sm
+              +statusPill(report.status)
+
+        if report.description
+          div
+            p.text-xs.text-gray-500.mb-1 Description
+            p.text-sm.text-gray-700.bg-gray-50.rounded-lg(class="px-3 py-2")= report.description
+
+        if report.message
+          div
+            p.text-xs.text-gray-500.mb-1 Reported message
+            .text-sm.text-gray-700.bg-amber-50.border.border-amber-100.rounded-lg(class="px-3 py-2")
+              p= report.message.text || report.message.body || '(empty message)'
+              p.text-xs.text-gray-500.mt-1 Sent #{fmtDate(report.message.created_at)}
+
+        if report.conversation
+          div
+            p.text-xs.text-gray-500.mb-1 Conversation
+            p.text-sm.text-gray-700
+              | Context: #{report.conversation.context_type.replace(/_/g, ' ')}
+              | &nbsp;·&nbsp;Status: #{report.conversation.status}
+
+      //- Footer: status transitions
+      .flex.flex-wrap.items-center.justify-end.gap-3.border-t.border-gray-100(class="px-6 py-4")
+        button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="open = false; document.getElementById('report-modal-mount').innerHTML = ''") Close
+        each s in reportStatuses
+          if s !== report.status
+            form(method="POST" action=`/admin/communication/inbox/${report.id}/status` class="inline")
+              input(type="hidden" name="status" value=s)
+              - var cls = s === 'resolved' ? 'bg-green-600 hover:bg-green-700' : (s === 'dismissed' ? 'bg-gray-600 hover:bg-gray-700' : (s === 'reviewing' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-primary-600 hover:bg-primary-700'))
+              button.px-4.py-2.rounded-lg.text-white.text-sm.font-medium(class=cls type="submit")
+                | Mark as #{s.replace(/_/g, ' ')}

@@ -1,0 +1,107 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  -
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
+    function userName(u) { if (!u) return 'Deleted user'; var n = ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); return n || u.email || ('User #' + u.id); }
+    function buildHref(page) { return '/admin/subscription/subscribers?page=' + page + (statusFilter ? '&status=' + statusFilter : ''); }
+
+  div(x-data="{ extendOpen: false, extending: { id: 0, name: '' }, cancelOpen: false, cancelling: { id: 0, name: '' } }")
+    //- Header
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          a(href="/admin/subscription/plans" class="hover:text-gray-700") Subscription
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Subscribers
+        h1.text-2xl.font-bold.text-gray-900 Subscription
+        p.text-gray-500.mt-1 Every user-plan record, with admin overrides.
+
+    include _tabs
+    include ../partials/flash
+
+    //- Status filter chips
+    .flex.flex-wrap.items-center.gap-2.mb-4
+      span.text-sm.text-gray-500 Filter by status:
+      a.text-sm.rounded-full.border(class=(statusFilter === null ? 'bg-primary-600 text-white border-primary-600 px-3 py-1' : 'border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-1') href='/admin/subscription/subscribers') All
+      each s in subStatuses
+        - var isActive = (statusFilter === s)
+        a.text-sm.rounded-full.border(class=(isActive ? 'bg-primary-600 text-white border-primary-600 px-3 py-1' : 'border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-1') href=`/admin/subscription/subscribers?status=${s}`)= s.replace(/_/g, ' ')
+
+    //- Subscribers table
+    if subscribers.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="user-check" class="w-10 h-10 mb-3")
+        p.text-sm No subscribers match this filter.
+    else
+      .bg-white.rounded-xl.border.border-gray-200.overflow-hidden
+        table.w-full.text-sm
+          thead.bg-gray-50.text-gray-500
+            tr
+              th.text-left.font-medium(class="px-4 py-3") User
+              th.text-left.font-medium(class="px-4 py-3") Plan
+              th.text-left.font-medium(class="px-4 py-3") Status
+              th.text-left.font-medium(class="px-4 py-3") Started
+              th.text-left.font-medium(class="px-4 py-3") Ends
+              th.text-left.font-medium(class="px-4 py-3") Next charge
+              th.text-right.font-medium(class="px-4 py-3") Actions
+          tbody.divide-y.divide-gray-100
+            each sub in subscribers
+              - var who = userName(sub.user)
+              - var planName = sub.subscription_plan ? sub.subscription_plan.name : '—'
+              tr(class="hover:bg-gray-50")
+                td(class="px-4 py-3")
+                  p.text-gray-900.font-medium= who
+                  if sub.user && sub.user.email
+                    p.text-xs.text-gray-500= sub.user.email
+                td.text-gray-700(class="px-4 py-3")= planName
+                td(class="px-4 py-3")
+                  +statusPill(sub.status)
+                td.text-gray-700(class="px-4 py-3")= fmtDate(sub.subscription_start_date)
+                td.text-gray-700(class="px-4 py-3")= fmtDate(sub.subscription_end_date)
+                td.text-gray-700(class="px-4 py-3")= fmtDate(sub.next_charge_date)
+                td.text-right(class="px-4 py-3")
+                  - var extPayload = JSON.stringify({ id: sub.id, name: who })
+                  - var canPayload = JSON.stringify({ id: sub.id, name: who })
+                  button.inline-flex.items-center.gap-1.text-sm.text-gray-700.mr-2(class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" type="button" "@click"=`extending = ${extPayload}; extendOpen = true`)
+                    i(data-lucide="clock-arrow-up" class="w-4 h-4")
+                    span Extend
+                  button.inline-flex.items-center.gap-1.text-sm.text-red-600(class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-red-50" type="button" "@click"=`cancelling = ${canPayload}; cancelOpen = true`)
+                    i(data-lucide="x-circle" class="w-4 h-4")
+                    span Cancel
+
+    +pagination(pagination, buildHref)
+
+    //- Extend modal
+    div(x-show="extendOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+      .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="extendOpen = false")
+      .relative.bg-white.rounded-xl.shadow-xl.w-full.p-6(class="max-w-md mx-4")
+        h3.text-lg.font-semibold.text-gray-900 Extend Subscription
+        p.text-sm.text-gray-500.mt-1 Add days to
+          |
+          span.font-medium.text-gray-700(x-text="extending.name")
+          | 's current subscription.
+        form.mt-4.space-y-4(method="POST" ":action"="`/admin/subscription/subscribers/${extending.id}/extend`")
+          div
+            label.block.text-sm.font-medium.text-gray-700.mb-1(for="days") Number of days
+            input#days.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="number" name="days" min="1" step="1" required placeholder="30")
+          .flex.justify-end.gap-3
+            button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="extendOpen = false") Cancel
+            button.px-4.py-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="hover:bg-primary-700" type="submit") Extend
+
+    //- Cancel modal
+    div(x-show="cancelOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+      .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="cancelOpen = false")
+      .relative.bg-white.rounded-xl.shadow-xl.w-full.p-6(class="max-w-md mx-4")
+        h3.text-lg.font-semibold.text-gray-900 Cancel Subscription
+        p.text-sm.text-gray-500.mt-1 The user will lose access at the end of the current period.
+        p.text-sm.text-gray-600.mt-4 Cancel
+          |
+          span.font-medium.text-gray-900(x-text="cancelling.name")
+          | 's subscription?
+        form.flex.justify-end.gap-3.mt-6(method="POST" ":action"="`/admin/subscription/subscribers/${cancelling.id}/cancel`")
+          button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="cancelOpen = false") Keep
+          button.px-4.py-2.rounded-lg.bg-red-600.text-white.text-sm.font-medium(type="submit") Yes, Cancel

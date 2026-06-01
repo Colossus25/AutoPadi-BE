@@ -23,5 +23,6 @@ import { AuthService } from "./services/auth.service";
     AuthService,
     PersonalAccessTokenService,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

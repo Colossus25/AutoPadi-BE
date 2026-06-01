@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { _IS_PROD_ } from '@/constants';
 import { SuperadminService } from './service/auth.service';
 import { SuperadminController } from './controllers/auth.controller';
 import { SuperRoles } from './entities/super-role.entity';
@@ -36,6 +37,19 @@ import { SuperadminNotificationController } from './controllers/notification.con
   ],
   providers: [SuperadminService, SuperGroupService, BannerService, ProductAttributeService, ServiceAttributeService],
   controllers: [SuperadminController, BannerController, ProductAttributeController, ServiceAttributeController, ServiceApprovalController, SuperadminNotificationController],
-  exports: [SuperadminService]
+  exports: [SuperadminService, BannerService, ProductAttributeService, ServiceAttributeService]
 })
-export class SuperadminModule {}
+export class SuperadminModule implements OnModuleInit {
+  constructor(private readonly superadminService: SuperadminService) {}
+
+  // Seed a default superadmin in non-prod so the admin dashboard can be logged
+  // into out of the box (email: superadmin@gmail.com / password: superadmin123).
+  async onModuleInit() {
+    if (_IS_PROD_) return;
+    try {
+      await this.superadminService.createDefaultSuperAdmin();
+    } catch {
+      // Non-fatal: never block boot on seeding.
+    }
+  }
+}

@@ -1,0 +1,69 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  -
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
+    function userName(u) { if (!u) return 'Deleted user'; var n = ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); return n || u.email || ('User #' + u.id); }
+    function buildHref(page) { return '/admin/subscription/payments?page=' + page + (statusFilter ? '&status=' + statusFilter : ''); }
+
+  div
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          a(href="/admin/subscription/plans" class="hover:text-gray-700") Subscription
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Payments
+        h1.text-2xl.font-bold.text-gray-900 Subscription
+        p.text-gray-500.mt-1 Every Paystack transaction tied to a plan, newest first.
+
+    include _tabs
+    include ../partials/flash
+
+    //- Status filter chips
+    .flex.flex-wrap.items-center.gap-2.mb-4
+      span.text-sm.text-gray-500 Filter by status:
+      a.text-sm.rounded-full.border(class=(statusFilter === null ? 'bg-primary-600 text-white border-primary-600 px-3 py-1' : 'border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-1') href='/admin/subscription/payments') All
+      each s in paymentStatuses
+        - var isActive = (statusFilter === s)
+        a.text-sm.rounded-full.border(class=(isActive ? 'bg-primary-600 text-white border-primary-600 px-3 py-1' : 'border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-1') href=`/admin/subscription/payments?status=${s}`)= s
+
+    //- Payments table
+    if payments.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="receipt" class="w-10 h-10 mb-3")
+        p.text-sm No payments match this filter.
+    else
+      .bg-white.rounded-xl.border.border-gray-200.overflow-hidden
+        table.w-full.text-sm
+          thead.bg-gray-50.text-gray-500
+            tr
+              th.text-left.font-medium(class="px-4 py-3") User
+              th.text-left.font-medium(class="px-4 py-3") Plan
+              th.text-right.font-medium(class="px-4 py-3") Amount
+              th.text-left.font-medium(class="px-4 py-3") Type
+              th.text-left.font-medium(class="px-4 py-3") Status
+              th.text-left.font-medium(class="px-4 py-3") Reference
+              th.text-left.font-medium(class="px-4 py-3") Date
+          tbody.divide-y.divide-gray-100
+            each pay in payments
+              - var who = userName(pay.user)
+              - var planName = pay.subscription_plan ? pay.subscription_plan.name : '—'
+              - var when = pay.paid_at || pay.created_at
+              tr(class="hover:bg-gray-50")
+                td(class="px-4 py-3")
+                  p.text-gray-900.font-medium= who
+                  if pay.user && pay.user.email
+                    p.text-xs.text-gray-500= pay.user.email
+                td.text-gray-700(class="px-4 py-3")= planName
+                td.text-right.text-gray-900.font-medium(class="px-4 py-3")
+                  +money(pay.amount)
+                td.text-gray-700(class="px-4 py-3")= pay.payment_type
+                td(class="px-4 py-3")
+                  +statusPill(pay.status)
+                td.text-xs.text-gray-500.font-mono(class="px-4 py-3")= pay.paystack_reference || '—'
+                td.text-gray-700(class="px-4 py-3")= fmtDate(when)
+
+    +pagination(pagination, buildHref)

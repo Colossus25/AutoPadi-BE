@@ -1,0 +1,161 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  div(x-data="{ createOpen: false, editOpen: false, editing: { id: 0, name: '', amount: 0, billing_interval: 'monthly', free_trial_days: 0, description: '', features: '', status: 'active' }, deleteOpen: false, deleting: { id: 0, name: '' } }")
+    //- Header
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          a(href="/admin/subscription/plans" class="hover:text-gray-700") Subscription
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Plans
+        h1.text-2xl.font-bold.text-gray-900 Subscription
+        p.text-gray-500.mt-1 Define the plans users can subscribe to.
+      button.inline-flex.items-center.gap-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="px-4 py-2 hover:bg-primary-700" type="button" "@click"="createOpen = true")
+        i(data-lucide="plus" class="w-4 h-4")
+        span Add Plan
+
+    include _tabs
+    include ../partials/flash
+
+    //- Plan table
+    if plans.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="credit-card" class="w-10 h-10 mb-3")
+        p.text-sm No plans yet.
+        button.mt-3.inline-flex.items-center.gap-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="px-4 py-2 hover:bg-primary-700" type="button" "@click"="createOpen = true")
+          i(data-lucide="plus" class="w-4 h-4")
+          span Create your first plan
+    else
+      .bg-white.rounded-xl.border.border-gray-200.overflow-hidden
+        table.w-full.text-sm
+          thead.bg-gray-50.text-gray-500
+            tr
+              th.text-left.font-medium(class="px-4 py-3") Name
+              th.text-left.font-medium(class="px-4 py-3") Amount
+              th.text-left.font-medium(class="px-4 py-3") Billing
+              th.text-left.font-medium(class="px-4 py-3") Trial
+              th.text-left.font-medium(class="px-4 py-3") Status
+              th.text-right.font-medium(class="px-4 py-3") Actions
+          tbody.divide-y.divide-gray-100
+            each p in plans
+              tr(class="hover:bg-gray-50")
+                td.text-gray-900.font-medium(class="px-4 py-3")= p.name
+                td.text-gray-700(class="px-4 py-3")
+                  +money(p.amount)
+                td.text-gray-700(class="px-4 py-3")= p.billing_interval
+                td.text-gray-700(class="px-4 py-3")= (p.free_trial_days || 0) + ' days'
+                td(class="px-4 py-3")
+                  +statusPill(p.status)
+                td.text-right(class="px-4 py-3")
+                  - var editPayload = JSON.stringify({ id: p.id, name: p.name || '', amount: Math.round(Number(p.amount || 0) / 100), billing_interval: p.billing_interval, free_trial_days: p.free_trial_days || 0, description: p.description || '', features: (p.features || []).join('\n'), status: p.status })
+                  - var deletePayload = JSON.stringify({ id: p.id, name: p.name || 'this plan' })
+                  button.inline-flex.items-center.gap-1.text-sm.text-gray-600.mr-2(class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" type="button" "@click"=`editing = ${editPayload}; editOpen = true`)
+                    i(data-lucide="pencil" class="w-4 h-4")
+                  button.inline-flex.items-center.gap-1.text-sm.text-red-600(class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-red-50" type="button" "@click"=`deleting = ${deletePayload}; deleteOpen = true`)
+                    i(data-lucide="trash-2" class="w-4 h-4")
+
+    +pagination(pagination, page => `/admin/subscription/plans?page=${page}`)
+
+    //- Create modal
+    +planModal('createOpen', 'Add Plan', 'New plan available for users to subscribe to.', '/admin/subscription/plans', 'Create Plan', false)
+
+    //- Edit modal
+    +planModal('editOpen', 'Edit Plan', 'Update plan details.', null, 'Save Changes', true)
+
+    //- Delete modal
+    div(x-show="deleteOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+      .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="deleteOpen = false")
+      .relative.bg-white.rounded-xl.shadow-xl.w-full.p-6(class="max-w-md mx-4")
+        h3.text-lg.font-semibold.text-gray-900 Delete Plan
+        p.text-sm.text-gray-500.mt-1 This cannot be undone.
+        p.text-sm.text-gray-600.mt-4 Are you sure you want to delete
+          |
+          span.font-medium.text-gray-900(x-text="deleting.name")
+          | ?
+        form.flex.justify-end.gap-3.mt-6(method="POST" ":action"="`/admin/subscription/plans/${deleting.id}/delete`")
+          button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="deleteOpen = false") Cancel
+          button.px-4.py-2.rounded-lg.bg-red-600.text-white.text-sm.font-medium(type="submit") Yes, Delete
+
+//- The create + edit forms share the same shape; only the action differs.
+//- When `isEdit`, action is computed from Alpine `editing.id` and fields are
+//- bound via x-model. Otherwise it's a blank create form.
+mixin planModal(toggleVar, heading, subtitle, action, submitLabel, isEdit)
+  div(x-show=toggleVar x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+    .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"=`${toggleVar} = false`)
+    .relative.bg-white.rounded-xl.shadow-xl.w-full.p-6.overflow-y-auto(class="max-w-lg mx-4 max-h-[90vh]")
+      .flex.items-start.justify-between.mb-4
+        div
+          h3.text-lg.font-semibold.text-gray-900= heading
+          p.text-sm.text-gray-500.mt-1= subtitle
+        button.text-gray-400(type="button" "@click"=`${toggleVar} = false`)
+          i(data-lucide="x" class="w-5 h-5")
+      if isEdit
+        form.space-y-4(method="POST" ":action"="`/admin/subscription/plans/${editing.id}/update`")
+          +planFields(true)
+          +planActions(toggleVar, submitLabel)
+      else
+        form.space-y-4(method="POST" action=action)
+          +planFields(false)
+          +planActions(toggleVar, submitLabel)
+
+mixin planFields(isEdit)
+  .grid.grid-cols-2.gap-4
+    div(class="col-span-2")
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Plan name
+      if isEdit
+        input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="text" name="name" "x-model"="editing.name" required)
+      else
+        input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="text" name="name" required placeholder="e.g. Premium")
+    div
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Amount (NGN)
+      if isEdit
+        input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="number" name="amount" min="0" step="1" "x-model"="editing.amount" required)
+      else
+        input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="number" name="amount" min="0" step="1" required placeholder="0")
+    div
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Billing interval
+      if isEdit
+        select.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="billing_interval" "x-model"="editing.billing_interval")
+          each iv in billingIntervals
+            option(value=iv)= iv
+      else
+        select.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="billing_interval")
+          each iv in billingIntervals
+            option(value=iv)= iv
+    div
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Free trial (days)
+      if isEdit
+        input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="number" name="free_trial_days" min="0" step="1" "x-model"="editing.free_trial_days")
+      else
+        input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" type="number" name="free_trial_days" min="0" step="1" value="0")
+    div
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Status
+      if isEdit
+        select.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="status" "x-model"="editing.status")
+          each s in planStatuses
+            option(value=s)= s
+      else
+        select.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="status")
+          each s in planStatuses
+            option(value=s)= s
+    div(class="col-span-2")
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Description
+      if isEdit
+        textarea.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="description" rows="2" "x-model"="editing.description")
+      else
+        textarea.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="description" rows="2" placeholder="Optional short description")
+    div(class="col-span-2")
+      label.block.text-sm.font-medium.text-gray-700.mb-1 Features (one per line)
+      if isEdit
+        textarea.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="features" rows="4" "x-model"="editing.features")
+      else
+        textarea.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="features" rows="4" placeholder="One feature per line")
+
+mixin planActions(toggleVar, submitLabel)
+  .flex.justify-end.gap-3
+    button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"=`${toggleVar} = false`) Cancel
+    button.px-4.py-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="hover:bg-primary-700" type="submit")= submitLabel

@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
+import { RequestMethod } from "@nestjs/common";
 import { HttpAdapterHost, NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -18,7 +19,29 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(cookieParser(appConfig.COOKIE_SECRET, {}));
-  app.use(helmet());
+  app.use(
+    helmet({
+      // The admin dashboard pulls Tailwind/htmx/Alpine/Lucide from CDNs and
+      // relies on inline config + Alpine expression evaluation, so relax CSP.
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "'unsafe-eval'",
+            "https://cdn.tailwindcss.com",
+            "https://unpkg.com",
+            "https://cdn.jsdelivr.net",
+          ],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+          imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'"],
+        },
+      },
+    })
+  );
   app.use(compression());
 
   app.enableCors({
@@ -31,9 +54,16 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, "..", "public"));
   app.setBaseViewsDir(join(__dirname, "..", "views"));
 
-  app.setGlobalPrefix("api");
+  // Keep the API under /api but serve the server-rendered admin dashboard at
+  // root (/admin, /admin/login, …).
+  app.setGlobalPrefix("api", {
+    exclude: [
+      { path: "admin", method: RequestMethod.ALL },
+      { path: "admin/(.*)", method: RequestMethod.ALL },
+    ],
+  });
 
-  app.setViewEngine("hbs");
+  app.setViewEngine("pug");
 
   app.use(
     ["/documentation", "/docs", "/logs", "/logs/error.log"],

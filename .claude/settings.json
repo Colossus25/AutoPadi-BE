@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PORT=8099 npm run dev)"
+    ]
+  }
+}

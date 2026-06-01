@@ -1,0 +1,119 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  div(x-data="{ createOpen: false, editOpen: false, editing: { id: 0, title: '', description: '', image: '' }, deleteOpen: false, deleting: { id: 0, title: '' } }")
+    //- Header
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          a(href="/admin/content/banners" class="hover:text-gray-700") Content & Ads
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Banners
+        h1.text-2xl.font-bold.text-gray-900 Content & Ads
+        p.text-gray-500.mt-1 Manage promotional banners shown across the platform.
+      button.inline-flex.items-center.gap-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="px-4 py-2 hover:bg-primary-700" type="button" "@click"="createOpen = true")
+        i(data-lucide="plus" class="w-4 h-4")
+        span Add Banner
+
+    include _tabs
+    include ../partials/flash
+
+    //- Banner grid
+    if banners.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="image" class="w-10 h-10 mb-3")
+        p.text-sm No banners yet.
+        button.mt-3.inline-flex.items-center.gap-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="px-4 py-2 hover:bg-primary-700" type="button" "@click"="createOpen = true")
+          i(data-lucide="plus" class="w-4 h-4")
+          span Add your first banner
+    else
+      .grid.gap-5(class="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")
+        each b in banners
+          .bg-white.rounded-xl.border.border-gray-200.overflow-hidden.flex.flex-col
+            if b.image
+              img.w-full.bg-gray-100.object-cover(class="h-40" src=b.image alt=(b.title || 'Banner image'))
+            else
+              .w-full.bg-gray-100.flex.items-center.justify-center.text-gray-300(class="h-40")
+                i(data-lucide="image" class="w-8 h-8")
+            .flex.flex-col.flex-1(class="p-4")
+              p.font-semibold.text-gray-900.truncate= b.title || 'Untitled banner'
+              p.text-sm.text-gray-500.mt-1(class="line-clamp-2")= b.description || '—'
+              p.text-xs.text-gray-400.mt-3= new Date(b.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+              .flex.justify-end.gap-2.mt-4
+                - var editPayload = JSON.stringify({ id: b.id, title: b.title || '', description: b.description || '', image: b.image || '' })
+                button.inline-flex.items-center.gap-1.text-sm.text-gray-600(class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" type="button" "@click"=`editing = ${editPayload}; editOpen = true`)
+                  i(data-lucide="pencil" class="w-4 h-4")
+                  span Edit
+                - var deletePayload = JSON.stringify({ id: b.id, title: b.title || 'this banner' })
+                button.inline-flex.items-center.gap-1.text-sm.text-red-600(class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-red-50" type="button" "@click"=`deleting = ${deletePayload}; deleteOpen = true`)
+                  i(data-lucide="trash-2" class="w-4 h-4")
+                  span Delete
+
+    //- Create modal
+    +modalShell('createOpen', 'Add Banner', 'Upload a new promotional banner.')
+      form(method="POST" action="/admin/content/banners" enctype="multipart/form-data" class="space-y-4")
+        +field('Title', 'title', 'text', '', 'e.g. Black Friday Sale')
+        +textarea('Description', 'description', '', 'Short description shown under the banner.')
+        +fileField('Image', 'image', true)
+        +modalActions('createOpen', 'Create Banner')
+
+    //- Edit modal
+    +modalShell('editOpen', 'Edit Banner', 'Update banner details. Leave image empty to keep the current one.')
+      form(method="POST" enctype="multipart/form-data" class="space-y-4" ":action"="`/admin/content/banners/${editing.id}/update`")
+        div
+          label.block.text-sm.font-medium.text-gray-700.mb-1 Title
+          input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3 focus:outline-none focus:ring-2 focus:ring-primary-500" type="text" name="title" "x-model"="editing.title")
+        div
+          label.block.text-sm.font-medium.text-gray-700.mb-1 Description
+          textarea.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3 focus:outline-none focus:ring-2 focus:ring-primary-500" name="description" rows="3" "x-model"="editing.description")
+        div(x-show="editing.image")
+          p.text-xs.text-gray-500.mb-1 Current image
+          img.rounded-lg.bg-gray-100.object-cover(class="h-24" ":src"="editing.image")
+        +fileField('Replace image', 'image', false)
+        +modalActions('editOpen', 'Save Changes')
+
+    //- Delete confirm modal
+    +modalShell('deleteOpen', 'Delete Banner', 'This cannot be undone.')
+      p.text-sm.text-gray-600 Are you sure you want to delete
+        span.font-medium.text-gray-900(x-text="deleting.title")
+        | ?
+      form.flex.justify-end.gap-3.mt-6(method="POST" ":action"="`/admin/content/banners/${deleting.id}/delete`")
+        button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="deleteOpen = false") Cancel
+        button.px-4.py-2.rounded-lg.bg-red-600.text-white.text-sm.font-medium(type="submit") Yes, Delete
+
+//- ===== Local mixins used only on this page =================================
+
+mixin modalShell(toggleVar, heading, subtitle)
+  div(x-show=toggleVar x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+    .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"=`${toggleVar} = false`)
+    .relative.bg-white.rounded-xl.shadow-xl.w-full.p-6(class="max-w-md mx-4")
+      .flex.items-start.justify-between.mb-4
+        div
+          h3.text-lg.font-semibold.text-gray-900= heading
+          p.text-sm.text-gray-500.mt-1= subtitle
+        button.text-gray-400(type="button" "@click"=`${toggleVar} = false`)
+          i(data-lucide="x" class="w-5 h-5")
+      block
+
+mixin field(label, name, type, value, placeholder)
+  div
+    label.block.text-sm.font-medium.text-gray-700.mb-1(for=name)= label
+    input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3 focus:outline-none focus:ring-2 focus:ring-primary-500" id=name type=type name=name value=value placeholder=placeholder)
+
+mixin textarea(label, name, value, placeholder)
+  div
+    label.block.text-sm.font-medium.text-gray-700.mb-1(for=name)= label
+    textarea.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3 focus:outline-none focus:ring-2 focus:ring-primary-500" id=name name=name rows="3" placeholder=placeholder)= value
+
+mixin fileField(label, name, required)
+  div
+    label.block.text-sm.font-medium.text-gray-700.mb-1(for=name)= label
+    input.w-full.text-sm.text-gray-600(class="file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-600 file:font-medium file:mr-3 file:px-4 file:py-2" id=name type="file" name=name accept="image/*" required=required)
+
+mixin modalActions(toggleVar, submitLabel)
+  .flex.justify-end.gap-3.mt-2
+    button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"=`${toggleVar} = false`) Cancel
+    button.px-4.py-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="hover:bg-primary-700" type="submit")= submitLabel

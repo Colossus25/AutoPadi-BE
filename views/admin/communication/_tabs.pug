@@ -1,0 +1,6 @@
+//- Tab strip for the Communication section.
+- var tabs = [{ key: 'inbox', label: 'Inbox', href: '/admin/communication/inbox' }, { key: 'announcements', label: 'Announcements', href: '/admin/communication/announcements' }, { key: 'notifications', label: 'Push Notifications Log', href: '/admin/communication/notifications' }]
+.bg-white.rounded-xl.border.border-gray-200.flex.gap-1.mb-6(class="p-1")
+  each t in tabs
+    - var isActive = (tab === t.key)
+    a.flex-1.text-center.text-sm.font-medium.rounded-lg(class=(isActive ? 'bg-primary-50 text-primary-600 px-4 py-2' : 'text-gray-600 hover:bg-gray-50 px-4 py-2') href=t.href)= t.label

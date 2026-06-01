@@ -1,0 +1,6 @@
+//- Tab strip for the Settings section.
+- var tabs = [{ key: 'profile', label: 'Profile', href: '/admin/settings/profile' }, { key: 'admins', label: 'Admins', href: '/admin/settings/admins' }, { key: 'roles', label: 'Roles', href: '/admin/settings/roles' }]
+.bg-white.rounded-xl.border.border-gray-200.flex.gap-1.mb-6(class="p-1")
+  each t in tabs
+    - var isActive = (tab === t.key)
+    a.flex-1.text-center.text-sm.font-medium.rounded-lg(class=(isActive ? 'bg-primary-50 text-primary-600 px-4 py-2' : 'text-gray-600 hover:bg-gray-50 px-4 py-2') href=t.href)= t.label

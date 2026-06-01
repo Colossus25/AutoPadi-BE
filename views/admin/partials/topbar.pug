@@ -1,0 +1,34 @@
+//- Topbar: search, notifications dropdown, profile dropdown.
+- var first = (admin && admin.first_name) ? admin.first_name : 'Admin'
+- var last = (admin && admin.last_name) ? admin.last_name : 'User'
+- var fullName = (first + ' ' + last).replace(/\b\w/g, function(c){ return c.toUpperCase(); })
+- var initials = ((first[0] || 'A') + (last[0] || 'U')).toUpperCase()
+- var roleName = (admin && admin.super_role && admin.super_role[0] && admin.super_role[0].name) ? admin.super_role[0].name : 'Administrator'
+header.h-16.shrink-0.bg-white.border-b.border-gray-200.flex.items-center.justify-between.gap-4.px-8
+  .relative.flex-1(class="max-w-xl")
+    i(data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400")
+    input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="pl-9 pr-4" type="search" placeholder="Search...")
+  .flex.items-center.gap-5
+    //- Notifications
+    .relative(x-data="{ open: false }")
+      button.relative.p-2.text-gray-500(class="hover:text-gray-700" type="button" "@click"="open = !open")
+        i(data-lucide="bell" class="w-5 h-5")
+        span.absolute.bg-primary-600.text-white.rounded-full.flex.items-center.justify-center(class="top-1 right-1 w-4 h-4 text-[10px]") 0
+      .absolute.right-0.bg-white.rounded-xl.shadow-lg.border.border-gray-100.p-4(class="mt-2 w-80 z-20" x-show="open" "@click.outside"="open = false" x-cloak)
+        p.font-semibold.text-gray-900 Notifications
+        p.text-sm.text-gray-400.mt-4 No notifications yet.
+    //- Profile
+    .relative(x-data="{ open: false }")
+      button.flex.items-center.gap-2(type="button" "@click"="open = !open")
+        .rounded-full.bg-primary-600.text-white.flex.items-center.justify-center.text-sm.font-semibold(class="w-9 h-9")= initials
+        .text-left(class="hidden sm:block")
+          p.text-sm.font-semibold.text-gray-900(class="leading-tight")= fullName
+          p.text-xs.text-gray-400(class="leading-tight")= roleName
+        i(data-lucide="chevron-down" class="w-4 h-4 text-gray-400")
+      .absolute.right-0.bg-white.rounded-xl.shadow-lg.border.border-gray-100.py-1(class="mt-2 w-44 z-20" x-show="open" "@click.outside"="open = false" x-cloak)
+        a.flex.items-center.gap-2.text-sm.text-gray-700(class="px-4 py-2 hover:bg-gray-50" href="/admin/settings")
+          i(data-lucide="settings" class="w-4 h-4")
+          span Settings
+        button.w-full.flex.items-center.gap-2.text-sm.text-red-600(class="px-4 py-2 hover:bg-gray-50" type="button" "@click"="open = false; logoutOpen = true")
+          i(data-lucide="log-out" class="w-4 h-4")
+          span Logout

@@ -33,6 +33,7 @@ import { DriverEmployerModule } from "./modules/driver-employer/driver-employer.
 import { MessagingModule } from "./modules/messaging/messaging.module";
 import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { AdminModule } from "./modules/admin/admin.module";
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
     SubscriptionsModule,
     AnalyticsModule,
     NotificationsModule,
+    AdminModule,
   ],
   providers: [JwtService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

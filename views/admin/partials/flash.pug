@@ -1,0 +1,6 @@
+//- One-shot flash message rendered when `flash` local is set ({kind, message}).
+if flash
+  - var isError = flash.kind === 'error'
+  .rounded-lg.border.text-sm.mb-4.flex.items-start.gap-2(class=(isError ? 'bg-red-50 border-red-100 text-red-700 px-4 py-3' : 'bg-green-50 border-green-100 text-green-700 px-4 py-3'))
+    i(data-lucide=(isError ? 'alert-circle' : 'check-circle-2') class="w-4 h-4 mt-0.5 shrink-0")
+    span= flash.message

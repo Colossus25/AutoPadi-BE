@@ -1,0 +1,74 @@
+//- Reusable UI building blocks for admin pages.
+
+//- Stat card: label, value, optional % delta, lucide icon.
+mixin statCard(stat)
+  .bg-white.rounded-xl.border.border-gray-200.p-5.flex.items-start.justify-between
+    div
+      p.text-sm.text-gray-500= stat.label
+      p.text-2xl.font-bold.text-gray-900.mt-1= stat.value
+      if stat.delta
+        - var up = stat.delta.direction === 'up'
+        p.text-sm.font-medium.mt-1.flex.items-center.gap-1(class=(up ? 'text-green-600' : 'text-red-600'))
+          i(data-lucide=(up ? 'trending-up' : 'trending-down') class="w-4 h-4")
+          span= stat.delta.value
+    .rounded-lg.bg-primary-50.text-primary-600.flex.items-center.justify-center(class="w-10 h-10")
+      i(data-lucide=stat.icon class="w-5 h-5")
+
+//- Section card wrapper with a title and a content block.
+mixin panel(heading)
+  .bg-white.rounded-xl.border.border-gray-200.p-6
+    if heading
+      h3.font-semibold.text-gray-900.mb-4= heading
+    block
+
+//- Placeholder used while a section's real data is not wired yet.
+mixin comingSoon(label)
+  .flex.flex-col.items-center.justify-center.text-center.text-gray-400(class="py-10")
+    i(data-lucide="bar-chart-3" class="w-8 h-8 mb-2")
+    p.text-sm= label || 'Coming soon'
+
+//- Coloured status pill. Maps a known status string to a colour family;
+//- unknown statuses fall back to gray. Accepts an optional `label` override
+//- (defaults to humanising the status).
+mixin statusPill(status, label)
+  -
+    var styles = {
+      // subscription statuses
+      active: 'bg-green-50 text-green-700',
+      trial: 'bg-blue-50 text-blue-700',
+      expired: 'bg-gray-100 text-gray-600',
+      canceled: 'bg-red-50 text-red-700',
+      payment_pending: 'bg-amber-50 text-amber-700',
+      // payment statuses
+      success: 'bg-green-50 text-green-700',
+      pending: 'bg-amber-50 text-amber-700',
+      failed: 'bg-red-50 text-red-700',
+      // plan / generic
+      inactive: 'bg-gray-100 text-gray-600',
+    }
+    var cls = styles[status] || 'bg-gray-100 text-gray-600'
+    var text = label || (status ? status.replace(/_/g, ' ') : '—')
+  span.inline-flex.items-center.rounded-full.font-medium(class=`${cls} px-2.5 py-0.5 text-xs`)= text
+
+//- Format a kobo bigint (TypeORM returns string for bigint) as ₦#,###.
+mixin money(kobo)
+  - var n = kobo == null ? 0 : Number(kobo)
+  - var naira = Math.round(n / 100)
+  | ₦#{naira.toLocaleString('en-US')}
+
+//- Pagination control. Pass the pagination object from the controller and a
+//- `buildHref(page)` callback so the mixin can preserve the page's other
+//- query params (status filter, etc).
+mixin pagination(p, buildHref)
+  if p && p.totalPages > 1
+    .flex.items-center.justify-between.text-sm.text-gray-500.mt-4
+      div Page #{p.page} of #{p.totalPages} · #{p.total} total
+      .flex.gap-2
+        if p.hasPrev
+          a.rounded-lg.border.border-gray-200.bg-white.text-gray-700(class="px-3 py-1.5 hover:bg-gray-50" href=buildHref(p.prevPage)) Previous
+        else
+          span.rounded-lg.border.border-gray-100.bg-gray-50.text-gray-300(class="px-3 py-1.5") Previous
+        if p.hasNext
+          a.rounded-lg.border.border-gray-200.bg-white.text-gray-700(class="px-3 py-1.5 hover:bg-gray-50" href=buildHref(p.nextPage)) Next
+        else
+          span.rounded-lg.border.border-gray-100.bg-gray-50.text-gray-300(class="px-3 py-1.5") Next

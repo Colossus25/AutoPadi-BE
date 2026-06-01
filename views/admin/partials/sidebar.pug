@@ -1,0 +1,17 @@
+//- Sidebar navigation. `active` local marks the current section.
+- var nav = [{ key: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', href: '/admin' }, { key: 'stores', label: 'Store Management', icon: 'store', href: '/admin/stores' }, { key: 'listings', label: 'Listings', icon: 'package', href: '/admin/listings' }, { key: 'subscription', label: 'Subscription', icon: 'credit-card', href: '/admin/subscription' }, { key: 'content', label: 'Content & Ads', icon: 'image', href: '/admin/content' }, { key: 'users', label: 'Users', icon: 'users', href: '/admin/users' }, { key: 'communication', label: 'Communication', icon: 'message-square', href: '/admin/communication' }, { key: 'settings', label: 'Settings', icon: 'settings', href: '/admin/settings' }]
+aside.w-64.shrink-0.bg-white.border-r.border-gray-200.flex.flex-col
+  .h-16.flex.items-center.gap-3.px-6.border-b.border-gray-100
+    .w-9.h-9.rounded-lg.bg-primary-600.text-white.flex.items-center.justify-center.font-bold A
+    span.font-semibold.text-gray-900 Autopadi Admin
+  nav.flex-1.px-4.py-6.space-y-1
+    each item in nav
+      - var isActive = (typeof active !== 'undefined' && active === item.key)
+      a.flex.items-center.gap-3.px-3.py-2.rounded-lg.text-sm.font-medium.transition(href=item.href class=(isActive ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'))
+        i(data-lucide=item.icon class="w-5 h-5")
+        span= item.label
+  .px-4.py-6.border-t.border-gray-100.space-y-3
+    button.w-full.flex.items-center.justify-center.gap-2.px-3.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-red-600(type="button" "@click"="logoutOpen = true")
+      i(data-lucide="log-out" class="w-4 h-4")
+      span Logout
+    p.text-center.text-xs.text-gray-400 Autopadi v1.0

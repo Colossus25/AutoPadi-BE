@@ -1,0 +1,10 @@
+extends base
+
+block body
+  .flex.min-h-screen(x-data="{ logoutOpen: false }")
+    include ../partials/sidebar
+    .flex-1.flex.flex-col.min-w-0
+      include ../partials/topbar
+      main.flex-1.p-8
+        block content
+    include ../partials/logout-modal

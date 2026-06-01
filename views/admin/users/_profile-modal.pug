@@ -1,0 +1,106 @@
+include ../mixins/ui
+
+-
+  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
+  function userName(u) { if (!u) return '—'; var n = ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); return n || u.email || ('User #' + u.id); }
+  var name = userName(user)
+  var status = isSuspended ? 'suspended' : 'active'
+
+//- The mount div in index.pug is empty until htmx swaps this in. We open the
+//- modal immediately by initialising Alpine's open=true; closing wipes the
+//- mount so the next click fetches fresh data.
+div(x-data="{ open: true }" x-init="$nextTick(() => window.lucide && lucide.createIcons())")
+  div(x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+    .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="open = false; document.getElementById('user-modal-mount').innerHTML = ''")
+    .relative.bg-white.rounded-xl.shadow-xl.w-full.overflow-hidden(class="max-w-2xl mx-4 max-h-[90vh] flex flex-col")
+      //- Modal header
+      .flex.items-start.justify-between.border-b.border-gray-100(class="px-6 py-4")
+        div
+          h3.text-lg.font-semibold.text-gray-900 User Profile Details
+          p.text-sm.text-gray-500 View complete user information and activity.
+        button.text-gray-400(type="button" "@click"="open = false; document.getElementById('user-modal-mount').innerHTML = ''")
+          i(data-lucide="x" class="w-5 h-5")
+
+      //- Body
+      .overflow-y-auto.flex-1(class="px-6 py-4 space-y-6")
+        //- Profile info
+        section
+          h4.font-semibold.text-gray-900.mb-3 Profile Information
+          .grid.gap-y-3.gap-x-6(class="grid-cols-1 sm:grid-cols-2")
+            div
+              p.text-xs.text-gray-500 User ID
+              p.text-sm.text-gray-900.font-medium U#{String(user.id).padStart(3, '0')}
+            div
+              p.text-xs.text-gray-500 Full Name
+              p.text-sm.text-gray-900.font-medium= name
+            div
+              p.text-xs.text-gray-500 Email
+              p.text-sm.text-gray-900= user.email
+            div
+              p.text-xs.text-gray-500 Phone
+              p.text-sm.text-gray-900= user.phone || '—'
+            div
+              p.text-xs.text-gray-500 User Type
+              p.text-sm.text-gray-900= user.user_type || '—'
+            div
+              p.text-xs.text-gray-500 Subscription Plan
+              if planName
+                p.text-sm.font-medium
+                  +statusPill(planStatus || 'active', planName)
+              else
+                p.text-sm.text-gray-500 Free
+            div
+              p.text-xs.text-gray-500 Date Joined
+              p.text-sm.text-gray-900= fmtDate(user.created_at)
+            div
+              p.text-xs.text-gray-500 Status
+              p.text-sm
+                +statusPill(status)
+
+        //- Payments
+        section
+          h4.font-semibold.text-gray-900.mb-3 Payment History
+          if !payments || payments.length === 0
+            .rounded-lg.bg-gray-50.text-sm.text-gray-500.text-center(class="py-6") No payments on file.
+          else
+            ul.divide-y.divide-gray-100.rounded-lg.border.border-gray-100
+              each p in payments
+                li.flex.items-center.justify-between(class="px-4 py-3")
+                  div
+                    p.text-sm.text-gray-900.font-medium
+                      if p.subscription_plan && p.subscription_plan.name
+                        | #{p.subscription_plan.name} subscription
+                      else
+                        | Payment
+                    p.text-xs.text-gray-500= fmtDate(p.paid_at || p.created_at)
+                  .flex.items-center.gap-3
+                    +statusPill(p.status)
+                    span.text-sm.text-gray-900.font-medium
+                      +money(p.amount)
+
+        //- Activity
+        section
+          h4.font-semibold.text-gray-900.mb-3 Recent Activity
+          if !activity || activity.length === 0
+            .rounded-lg.bg-gray-50.text-sm.text-gray-500.text-center(class="py-6") No activity recorded yet.
+          else
+            ul.space-y-3
+              each item in activity
+                li.flex.items-start.gap-3
+                  .rounded-lg.bg-gray-100.text-gray-500.flex.items-center.justify-center.shrink-0(class="w-9 h-9")
+                    i(data-lucide=item.icon class="w-4 h-4")
+                  div(class="flex-1 min-w-0")
+                    p.text-sm.text-gray-900.font-medium= item.title
+                    p.text-xs.text-gray-500= item.ago
+
+      //- Actions
+      .flex.items-center.justify-end.gap-3.border-t.border-gray-100(class="px-6 py-4")
+        button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="open = false; document.getElementById('user-modal-mount').innerHTML = ''") Close
+        if isSuspended
+          form(method="POST" action=`/admin/users/${user.id}/reactivate`)
+            button.px-4.py-2.rounded-lg.bg-green-600.text-white.text-sm.font-medium(class="hover:bg-green-700" type="submit") Reactivate
+        else
+          form(method="POST" action=`/admin/users/${user.id}/suspend`)
+            button.px-4.py-2.rounded-lg.bg-amber-600.text-white.text-sm.font-medium(class="hover:bg-amber-700" type="submit") Suspend Account
+        form(method="POST" action=`/admin/users/${user.id}/reset-password`)
+          button.px-4.py-2.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="hover:bg-primary-700" type="submit") Reset Password

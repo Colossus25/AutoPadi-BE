@@ -1,0 +1,99 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  -
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
+    function ownerName(o) { if (!o) return '—'; var n = ((o.first_name || '') + ' ' + (o.last_name || '')).trim(); return n || o.email || ('User #' + o.id); }
+    function buildHref(page) {
+      var qs = ['page=' + page];
+      if (q) qs.push('q=' + encodeURIComponent(q));
+      return '/admin/stores?' + qs.join('&');
+    }
+
+  div
+    //- Header
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Stores
+        h1.text-2xl.font-bold.text-gray-900 Store Management
+        p.text-gray-500.mt-1 Browse every store on the platform with their listings and engagement.
+
+    //- Stat cards
+    .grid.gap-5.mb-6(class="grid-cols-1 sm:grid-cols-3")
+      +statCard({ label: 'Total Stores', value: stats.totalStores.toLocaleString('en-US'), delta: null, icon: 'store' })
+      +statCard({ label: 'Total Listings', value: stats.totalProducts.toLocaleString('en-US'), delta: null, icon: 'package' })
+      +statCard({ label: 'Total Views', value: stats.totalViews.toLocaleString('en-US'), delta: null, icon: 'eye' })
+
+    include ../partials/flash
+
+    //- Search bar
+    .bg-white.rounded-xl.border.border-gray-200.mb-6(class="p-4")
+      form.flex.gap-3(method="GET" action="/admin/stores")
+        .relative.flex-1
+          i(data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400")
+          input.w-full.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="pl-9 pr-3" type="search" name="q" value=q placeholder="Search by name, address, email, or phone…")
+        button.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="px-4 py-2 hover:bg-primary-700" type="submit") Search
+        if q
+          a.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(class="px-4 py-2 hover:bg-gray-50 flex items-center" href="/admin/stores") Clear
+
+    //- Table
+    if stores.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="store" class="w-10 h-10 mb-3")
+        p.text-sm No stores match this search.
+    else
+      .bg-white.rounded-xl.border.border-gray-200.overflow-hidden
+        table.w-full.text-sm
+          thead.bg-gray-50.text-gray-500
+            tr
+              th.text-left.font-medium(class="px-4 py-3") Store
+              th.text-left.font-medium(class="px-4 py-3") Owner
+              th.text-left.font-medium(class="px-4 py-3") Contact
+              th.text-left.font-medium(class="px-4 py-3") Categories
+              th.text-right.font-medium(class="px-4 py-3") Views
+              th.text-left.font-medium(class="px-4 py-3") Created
+              th.text-right.font-medium(class="px-4 py-3") Actions
+          tbody.divide-y.divide-gray-100
+            each s in stores
+              - var cats = Array.isArray(s.category) ? s.category : (s.category ? [s.category] : [])
+              tr(class="hover:bg-gray-50")
+                td(class="px-4 py-3")
+                  .flex.items-center.gap-3
+                    if s.image
+                      img.rounded-lg.bg-gray-100.object-cover.shrink-0(class="w-10 h-10" src=s.image alt="")
+                    else
+                      .rounded-lg.bg-primary-50.text-primary-600.flex.items-center.justify-center.shrink-0(class="w-10 h-10")
+                        i(data-lucide="store" class="w-4 h-4")
+                    div(class="min-w-0")
+                      p.text-gray-900.font-medium.truncate= s.name || 'Unnamed store'
+                      if s.address
+                        p.text-xs.text-gray-500.truncate= s.address
+                td.text-gray-700(class="px-4 py-3")= ownerName(s.created_by)
+                td.text-xs.text-gray-500(class="px-4 py-3")
+                  if s.email
+                    p= s.email
+                  if s.phone
+                    p= s.phone
+                  if !s.email && !s.phone
+                    | —
+                td.text-xs.text-gray-500(class="px-4 py-3")
+                  if cats.length
+                    each c in cats
+                      span.inline-block.rounded-full.bg-gray-100.text-gray-700.mr-1.mb-1(class="px-2 py-0.5 text-xs")= c
+                  else
+                    | —
+                td.text-right.text-gray-900.font-medium(class="px-4 py-3")= (s.views_count || 0).toLocaleString('en-US')
+                td.text-gray-700(class="px-4 py-3")= fmtDate(s.created_at)
+                td.text-right(class="px-4 py-3")
+                  button.inline-flex.items-center.gap-1.text-sm.text-gray-600(class="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" type="button" title="View store" hx-get=`/admin/stores/${s.id}/profile` hx-target="#store-modal-mount" hx-swap="innerHTML")
+                    i(data-lucide="eye" class="w-4 h-4")
+                    span View
+
+    +pagination(pagination, buildHref)
+
+    //- Mount point for htmx-fetched store modal
+    #store-modal-mount

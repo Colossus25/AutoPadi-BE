@@ -1,0 +1,110 @@
+include ../mixins/ui
+
+-
+  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
+  function ownerName(o) { if (!o) return '—'; var n = ((o.first_name || '') + ' ' + (o.last_name || '')).trim(); return n || o.email || ('User #' + o.id); }
+  function fmtPrice(p) { if (p == null || p === '') return '—'; var n = Number(p); return isFinite(n) ? '₦' + n.toLocaleString('en-US') : p; }
+  var cats = Array.isArray(store.category) ? store.category : (store.category ? [store.category] : [])
+
+div(x-data="{ open: true }" x-init="$nextTick(() => window.lucide && lucide.createIcons())")
+  div(x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center")
+    .absolute.inset-0.bg-black(class="bg-opacity-40" "@click"="open = false; document.getElementById('store-modal-mount').innerHTML = ''")
+    .relative.bg-white.rounded-xl.shadow-xl.w-full.overflow-hidden(class="max-w-3xl mx-4 max-h-[90vh] flex flex-col")
+      //- Header (with cover image if present)
+      div(class="relative")
+        if store.image
+          img.w-full.bg-gray-100.object-cover(class="h-40" src=store.image alt="")
+        else
+          .w-full.bg-gradient-to-br.from-primary-50.to-gray-100(class="h-40")
+        button.absolute.bg-white.rounded-full.shadow.text-gray-400(class="top-3 right-3 p-1.5" type="button" "@click"="open = false; document.getElementById('store-modal-mount').innerHTML = ''")
+          i(data-lucide="x" class="w-4 h-4")
+
+      //- Body
+      .overflow-y-auto.flex-1(class="px-6 py-5 space-y-6")
+        //- Title + owner
+        div
+          h3.text-xl.font-semibold.text-gray-900= store.name || 'Unnamed store'
+          p.text-sm.text-gray-500.mt-1
+            | Owned by
+            span.text-gray-700.font-medium= ownerName(store.created_by)
+            if store.created_by && store.created_by.email
+              | &nbsp;·&nbsp;
+              span.text-gray-500= store.created_by.email
+          if cats.length
+            .mt-3
+              each c in cats
+                span.inline-block.rounded-full.bg-primary-50.text-primary-700.font-medium.mr-1.mb-1(class="px-2.5 py-0.5 text-xs")= c
+
+        //- Engagement
+        .grid.gap-3(class="grid-cols-3")
+          .rounded-lg.bg-gray-50(class="p-3")
+            p.text-xs.text-gray-500 Views
+            p.text-lg.font-semibold.text-gray-900= (store.views_count || 0).toLocaleString('en-US')
+          .rounded-lg.bg-gray-50(class="p-3")
+            p.text-xs.text-gray-500 Total clicks
+            p.text-lg.font-semibold.text-gray-900= totalClicks.toLocaleString('en-US')
+          .rounded-lg.bg-gray-50(class="p-3")
+            p.text-xs.text-gray-500 Total enquiries
+            p.text-lg.font-semibold.text-gray-900= totalEnquiries.toLocaleString('en-US')
+
+        //- Profile info
+        section
+          h4.font-semibold.text-gray-900.mb-3 Store Information
+          .grid.gap-y-3.gap-x-6(class="grid-cols-1 sm:grid-cols-2")
+            div
+              p.text-xs.text-gray-500 Address
+              p.text-sm.text-gray-900= store.address || '—'
+            div
+              p.text-xs.text-gray-500 Registration #
+              p.text-sm.text-gray-900= store.registration_no || '—'
+            div
+              p.text-xs.text-gray-500 Email
+              p.text-sm.text-gray-900= store.email || '—'
+            div
+              p.text-xs.text-gray-500 Phone
+              p.text-sm.text-gray-900= store.phone || '—'
+            div
+              p.text-xs.text-gray-500 Contact person
+              p.text-sm.text-gray-900= store.contact_person_name || '—'
+            div
+              p.text-xs.text-gray-500 Contact phone
+              p.text-sm.text-gray-900= store.contact_person_phone || '—'
+            if store.website
+              div(class="sm:col-span-2")
+                p.text-xs.text-gray-500 Website
+                a.text-sm.text-primary-600(class="hover:underline" href=store.website target="_blank" rel="noopener")= store.website
+            div(class="sm:col-span-2")
+              p.text-xs.text-gray-500 Description
+              p.text-sm.text-gray-700= store.description || '—'
+
+        //- Products
+        section
+          .flex.items-center.justify-between.mb-3
+            h4.font-semibold.text-gray-900 Top products
+            span.text-xs.text-gray-500= productCount + ' total'
+          if !topProducts || topProducts.length === 0
+            .rounded-lg.bg-gray-50.text-sm.text-gray-500.text-center(class="py-6") No products listed yet.
+          else
+            ul.divide-y.divide-gray-100.rounded-lg.border.border-gray-100
+              each p in topProducts
+                li.flex.items-center.gap-3(class="px-4 py-3")
+                  - var thumb = Array.isArray(p.media) && p.media.length ? p.media[0] : null
+                  if thumb
+                    img.rounded.bg-gray-100.object-cover.shrink-0(class="w-10 h-10" src=thumb alt="")
+                  else
+                    .rounded.bg-gray-100.flex.items-center.justify-center.text-gray-300.shrink-0(class="w-10 h-10")
+                      i(data-lucide="package" class="w-4 h-4")
+                  .flex-1.min-w-0
+                    p.text-sm.text-gray-900.font-medium.truncate= p.title || 'Untitled'
+                    p.text-xs.text-gray-500 #{(p.clicks_count || 0) + ' clicks · ' + (p.enquiries_count || 0) + ' enquiries'}
+                  p.text-sm.text-gray-900.font-medium.shrink-0= fmtPrice(p.price)
+
+        //- Meta
+        section.text-xs.text-gray-500
+          | Joined #{fmtDate(store.created_at)}
+          if store.updated_at && store.updated_at.getTime() > store.created_at.getTime() + 1000
+            | &nbsp;·&nbsp;Last updated #{fmtDate(store.updated_at)}
+
+      //- Footer actions
+      .flex.items-center.justify-end.gap-3.border-t.border-gray-100(class="px-6 py-4")
+        button.px-4.py-2.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(type="button" "@click"="open = false; document.getElementById('store-modal-mount').innerHTML = ''") Close

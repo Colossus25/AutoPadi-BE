@@ -1,0 +1,89 @@
+extends ../layouts/app
+include ../mixins/ui
+
+block content
+  -
+    function fmtDate(d) { return d ? new Date(d).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'; }
+    function userName(u) { if (!u) return 'Deleted user'; var n = ((u.first_name || '') + ' ' + (u.last_name || '')).trim(); return n || u.email || ('User #' + u.id); }
+    function buildHref(page) {
+      var qs = ['page=' + page];
+      if (statusFilter) qs.push('status=' + statusFilter);
+      if (reasonFilter) qs.push('reason=' + reasonFilter);
+      return '/admin/communication/inbox?' + qs.join('&');
+    }
+
+  div
+    //- Header
+    .flex.items-start.justify-between.mb-6
+      div
+        nav.flex.items-center.gap-2.text-sm.text-gray-500.mb-2
+          a(href="/admin" class="hover:text-gray-700") Dashboard
+          i(data-lucide="chevron-right" class="w-3.5 h-3.5")
+          span.text-gray-900.font-medium Communication
+        h1.text-2xl.font-bold.text-gray-900 Communication Center
+        p.text-gray-500.mt-1 User-reported conversations needing admin review.
+
+    //- Stat cards
+    .grid.gap-5.mb-6(class="grid-cols-1 sm:grid-cols-3")
+      +statCard({ label: 'Open reports', value: stats.open.toLocaleString('en-US'), delta: null, icon: 'inbox' })
+      +statCard({ label: 'Resolved', value: stats.resolved.toLocaleString('en-US'), delta: null, icon: 'check-circle-2' })
+      +statCard({ label: 'Total reports', value: stats.total.toLocaleString('en-US'), delta: null, icon: 'flag' })
+
+    include _tabs
+    include ../partials/flash
+
+    //- Filters
+    .bg-white.rounded-xl.border.border-gray-200.mb-6(class="p-4")
+      form.flex.flex-wrap.gap-3(method="GET" action="/admin/communication/inbox")
+        div
+          label.block.text-xs.font-medium.text-gray-500.mb-1 Status
+          select.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="status")
+            option(value="" selected=(statusFilter === null)) All statuses
+            each s in reportStatuses
+              option(value=s selected=(statusFilter === s))= s
+        div
+          label.block.text-xs.font-medium.text-gray-500.mb-1 Reason
+          select.py-2.bg-gray-50.border.border-gray-200.rounded-lg.text-sm(class="px-3" name="reason")
+            option(value="" selected=(reasonFilter === null)) All reasons
+            each r in reportReasons
+              option(value=r selected=(reasonFilter === r))= r.replace(/_/g, ' ')
+        .flex.items-end.gap-2
+          button.rounded-lg.bg-primary-600.text-white.text-sm.font-medium(class="px-4 py-2 hover:bg-primary-700" type="submit") Apply
+          if statusFilter || reasonFilter
+            a.rounded-lg.border.border-gray-200.text-sm.font-medium.text-gray-700(class="px-4 py-2 hover:bg-gray-50 flex items-center" href="/admin/communication/inbox") Clear
+
+    //- Table
+    if reports.length === 0
+      .bg-white.rounded-xl.border.border-gray-200.flex.flex-col.items-center.text-center.text-gray-400(class="p-12")
+        i(data-lucide="inbox" class="w-10 h-10 mb-3")
+        p.text-sm No reports match these filters.
+    else
+      .bg-white.rounded-xl.border.border-gray-200.overflow-hidden
+        table.w-full.text-sm
+          thead.bg-gray-50.text-gray-500
+            tr
+              th.text-left.font-medium(class="px-4 py-3") Reporter
+              th.text-left.font-medium(class="px-4 py-3") Reported user
+              th.text-left.font-medium(class="px-4 py-3") Reason
+              th.text-left.font-medium(class="px-4 py-3") Status
+              th.text-left.font-medium(class="px-4 py-3") Submitted
+              th.text-right.font-medium(class="px-4 py-3") Actions
+          tbody.divide-y.divide-gray-100
+            each r in reports
+              tr(class="hover:bg-gray-50")
+                td.text-gray-900(class="px-4 py-3")= userName(r.reporter)
+                td.text-gray-900(class="px-4 py-3")= userName(r.reported_user)
+                td(class="px-4 py-3")
+                  span.text-xs.text-gray-700.rounded.bg-gray-100(class="px-2 py-0.5")= r.reason.replace(/_/g, ' ')
+                td(class="px-4 py-3")
+                  +statusPill(r.status)
+                td.text-xs.text-gray-500(class="px-4 py-3")= fmtDate(r.created_at)
+                td.text-right(class="px-4 py-3")
+                  button.inline-flex.items-center.gap-1.text-sm.text-gray-600(class="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" type="button" title="View report" hx-get=`/admin/communication/inbox/${r.id}/detail` hx-target="#report-modal-mount" hx-swap="innerHTML")
+                    i(data-lucide="eye" class="w-4 h-4")
+                    span View
+
+    +pagination(pagination, buildHref)
+
+    //- Mount point for the htmx-fetched report modal
+    #report-modal-mount

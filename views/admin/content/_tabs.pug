@@ -1,0 +1,6 @@
+//- Tab strip for Content & Ads. Active tab marked by the `tab` local.
+- var tabs = [{ key: 'banners', label: 'Banners', href: '/admin/content/banners' }, { key: 'product-attributes', label: 'Product Attributes', href: '/admin/content/product-attributes' }, { key: 'service-attributes', label: 'Service Attributes', href: '/admin/content/service-attributes' }]
+.bg-white.rounded-xl.border.border-gray-200.flex.gap-1.mb-6(class="p-1")
+  each t in tabs
+    - var isActive = (tab === t.key)
+    a.flex-1.text-center.text-sm.font-medium.rounded-lg(class=(isActive ? 'bg-primary-50 text-primary-600 px-4 py-2' : 'text-gray-600 hover:bg-gray-50 px-4 py-2') href=t.href)= t.label
