@@ -230,6 +230,71 @@ export class BookingService {
     return saved;
   }
 
+  async getProviderReviews(providerId: number, pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const query = this.reviewRepository
+      .createQueryBuilder('review')
+      .leftJoinAndSelect('review.reviewer', 'reviewer')
+      .leftJoin('review.booking', 'booking')
+      .leftJoinAndSelect('booking.service', 'service')
+      .where('booking.service_provider_id = :providerId', { providerId })
+      .orderBy('review.created_at', 'DESC');
+
+    const [reviews, total] = await query.skip(skip).take(limit).getManyAndCount();
+
+    const { avg } = await this.reviewRepository
+      .createQueryBuilder('review')
+      .leftJoin('review.booking', 'booking')
+      .where('booking.service_provider_id = :providerId', { providerId })
+      .select('AVG(review.rating)', 'avg')
+      .getRawOne();
+
+    return {
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        averageRating: avg ? Number(Number(avg).toFixed(2)) : 0,
+      },
+      reviews,
+    };
+  }
+
+  async getServiceReviews(serviceId: number, pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const query = this.reviewRepository
+      .createQueryBuilder('review')
+      .leftJoinAndSelect('review.reviewer', 'reviewer')
+      .leftJoin('review.booking', 'booking')
+      .where('booking.service_id = :serviceId', { serviceId })
+      .orderBy('review.created_at', 'DESC');
+
+    const [reviews, total] = await query.skip(skip).take(limit).getManyAndCount();
+
+    const { avg } = await this.reviewRepository
+      .createQueryBuilder('review')
+      .leftJoin('review.booking', 'booking')
+      .where('booking.service_id = :serviceId', { serviceId })
+      .select('AVG(review.rating)', 'avg')
+      .getRawOne();
+
+    return {
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        averageRating: avg ? Number(Number(avg).toFixed(2)) : 0,
+      },
+      reviews,
+    };
+  }
+
   async addReport(bookingId: number, dto: CreateReportDto, user: User) {
     const booking = await this.getBookingById(bookingId);
 

@@ -49,6 +49,18 @@ export class UserBookingController {
     return res.status(HttpStatus.CREATED).json({ success: true, data: review });
   }
 
+  @Get('providers/:id/reviews')
+  async getProviderReviews(@Param('id') id: number, @Query() pagination: PaginationDto, @Res() res: Response) {
+    const reviews = await this.bookingService.getProviderReviews(id, pagination);
+    return res.status(HttpStatus.OK).json({ success: true, data: reviews });
+  }
+
+  @Get('services/:id/reviews')
+  async getServiceReviews(@Param('id') id: number, @Query() pagination: PaginationDto, @Res() res: Response) {
+    const reviews = await this.bookingService.getServiceReviews(id, pagination);
+    return res.status(HttpStatus.OK).json({ success: true, data: reviews });
+  }
+
   @Post('bookings/:id/report')
   @UsePipes(new JoiValidationPipe(createReportValidation))
   async addReport(@Param('id') id: number, @Body() dto: CreateReportDto, @Req() req: UserRequest, @Res() res: Response) {
