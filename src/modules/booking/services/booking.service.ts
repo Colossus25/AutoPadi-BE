@@ -116,6 +116,7 @@ export class BookingService {
       .leftJoinAndSelect('booking.user', 'user')
       .leftJoinAndSelect('booking.service_provider', 'service_provider')
       .leftJoinAndSelect('booking.reviews', 'reviews')
+      .leftJoinAndSelect('reviews.reviewer', 'reviewer')
       .leftJoinAndSelect('booking.reports', 'reports')
       .where('booking.id = :id', { id })
       .getOne();
