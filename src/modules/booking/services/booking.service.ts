@@ -61,6 +61,7 @@ export class BookingService {
     let query = this.bookingRepository
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.service', 'service')
+      .leftJoinAndSelect('booking.service_provider', 'service_provider')
       .where('booking.user_id = :userId', { userId: user.id })
       .orderBy('booking.created_at', 'DESC');
 

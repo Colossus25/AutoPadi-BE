@@ -64,13 +64,18 @@ export class MessagingService {
     const { page, limit } = pagination;
     const skip = (page - 1) * limit;
 
-    // Get all conversations for this user using a simpler query
+    // Get all conversations for this user. Note: we deliberately do NOT
+    // leftJoinAndSelect('c.messages') here. Joining the one-to-many messages
+    // collection both breaks skip/take pagination (rows get multiplied) and
+    // returns the messages in a non-deterministic order, so picking the
+    // "last" element of conv.messages would give an arbitrary message that
+    // differs between requests/users. The latest message is fetched per
+    // conversation below with an explicit ORDER BY.
     const [conversations, total] = await this.conversationRepository
       .createQueryBuilder('c')
       .innerJoin('c.participants', 'p', 'p.user_id = :userId', { userId: user.id })
       .leftJoinAndSelect('c.participants', 'allParticipants')
       .leftJoinAndSelect('allParticipants.user', 'u')
-      .leftJoinAndSelect('c.messages', 'm')
       .orderBy('c.updated_at', 'DESC')
       .skip(skip)
       .take(limit)
@@ -93,11 +98,13 @@ export class MessagingService {
         },
       });
 
-      // Get the last message (excluding soft-deleted ones for preview purposes)
-      const visibleMessages = (conv.messages || []).filter((m) => !m.deleted_at);
-      const lastMessage = visibleMessages.length > 0
-        ? visibleMessages[visibleMessages.length - 1]
-        : null;
+      // Get the last message (excluding soft-deleted ones for preview purposes).
+      // Fetched per conversation with an explicit ORDER BY so every caller sees
+      // the same, genuinely-latest message regardless of row return order.
+      const lastMessage = await this.messageRepository.findOne({
+        where: { conversation_id: conv.id, deleted_at: IsNull() },
+        order: { created_at: 'DESC' },
+      });
 
       // Only include the receiver in participants for clarity
       return {
