@@ -7,5 +7,8 @@ export const hashResource = async (password: string) => await bcrypt.hash(passwo
 
 export const hashResourceSync = (password: string) => bcrypt.hashSync(password, saltOrRounds);
 
-export const verifyHash = async (password?: string, hashedResource?: string) =>
+export const verifyHash = async (
+  password?: string | null,
+  hashedResource?: string | null
+) =>
   password && hashedResource ? await bcrypt.compare(password, hashedResource) : false;

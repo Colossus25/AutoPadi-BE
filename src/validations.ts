@@ -31,6 +31,10 @@ export const ConfigModuleSchema = Joi.object({
   SWAGGER_PASSWORD: Joi.string().required(),
   // Optional so the app still boots in environments without push configured
   FIREBASE_SERVICE_ACCOUNT: Joi.string().allow(null, "").optional(),
+  // Optional so the app still boots before Google sign-in is configured
+  GOOGLE_CLIENT_ID: Joi.string().allow(null, "").optional(),
+  GOOGLE_IOS_CLIENT_ID: Joi.string().allow(null, "").optional(),
+  GOOGLE_ANDROID_CLIENT_ID: Joi.string().allow(null, "").optional(),
   // REDIS_HOST: Joi.string().required(),
   // REDIS_PORT: Joi.string().allow(null, ""),
   // REDIS_PASSWORD: Joi.string().allow(null, ""),

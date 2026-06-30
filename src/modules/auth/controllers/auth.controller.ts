@@ -20,15 +20,20 @@ import {
   ForgotPasswordDto,
   LoginDto,
   ResetPasswordDto,
+  RoleDto,
+  GoogleAuthDto,
 } from "../dto";
 import { AuthService } from "../services/auth.service";
 import { UserLoginGuard } from "../user-guards";
+import { AuthGuard } from "@/guards";
 import {
   CreateAccountValidation,
   UserTypeValidation,
   ForgotPasswordValidation,
   LoginValidation,
   ResetPasswordValidation,
+  RoleValidation,
+  GoogleAuthValidation,
 } from "../validations";
 
 @ApiTags("Authentication")
@@ -98,7 +103,7 @@ export class AuthController {
       });
     }
 
-    const cookieData = { token, staff: extractUserForCookie(user) };
+    const cookieData = { token, user: extractUserForCookie(user) };
     res.cookie(
       _AUTH_COOKIE_NAME_,
       encodeURIComponent(JSON.stringify(cookieData)),
@@ -109,6 +114,30 @@ export class AuthController {
       message,
       data: data,
     };
+  }
+
+  @Post("google")
+  @UsePipes(new JoiValidationPipe(GoogleAuthValidation))
+  async googleAuth(
+    @Body() body: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    res.clearCookie(_AUTH_COOKIE_NAME_);
+
+    const { message, data } = await this.authService.googleAuth(
+      body.idToken,
+      body.userType
+    );
+    const { user, token } = data;
+
+    const cookieData = { token, user: extractUserForCookie(user) };
+    res.cookie(
+      _AUTH_COOKIE_NAME_,
+      encodeURIComponent(JSON.stringify(cookieData)),
+      CookieOptions
+    );
+
+    return { message, data };
   }
 
   @Post("forgot-password")
@@ -139,5 +168,38 @@ export class AuthController {
   @UsePipes(new JoiValidationPipe(ForgotPasswordValidation))
   async resendVerifyEmail(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return await this.authService.resendVerifyEmail(forgotPasswordDto);
+  }
+
+  @Post("roles")
+  @UseGuards(AuthGuard)
+  @UsePipes(new JoiValidationPipe(RoleValidation))
+  async addRole(@Body() body: RoleDto, @Req() req: UserRequest) {
+    return await this.authService.addRole(req.user.id, body.userType);
+  }
+
+  @Post("switch-role")
+  @UseGuards(AuthGuard)
+  @UsePipes(new JoiValidationPipe(RoleValidation))
+  async switchRole(
+    @Body() body: RoleDto,
+    @Req() req: UserRequest,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    res.clearCookie(_AUTH_COOKIE_NAME_);
+
+    const { message, data } = await this.authService.switchRole(
+      req.user.id,
+      body.userType
+    );
+    const { user, token } = data;
+
+    const cookieData = { token, user: extractUserForCookie(user) };
+    res.cookie(
+      _AUTH_COOKIE_NAME_,
+      encodeURIComponent(JSON.stringify(cookieData)),
+      CookieOptions
+    );
+
+    return { message, data };
   }
 }

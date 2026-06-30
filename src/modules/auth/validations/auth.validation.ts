@@ -22,6 +22,21 @@ export const UserTypeValidation = Joi.object({
     .label("User type"),
 });
 
+export const RoleValidation = Joi.object().keys({
+  userType: Joi.string()
+    .valid("buyer", "auto dealer", "service provider", "driver", "driver employer")
+    .required()
+    .label("User type"),
+});
+
+export const GoogleAuthValidation = Joi.object().keys({
+  idToken: Joi.string().required().label("Google token"),
+  userType: Joi.string()
+    .valid("buyer", "auto dealer", "service provider", "driver", "driver employer")
+    .optional()
+    .label("User type"),
+});
+
 export const ChangeUserPasswordValidation = Joi.object().keys({
   old_password: Joi.string().required().label("Old password"),
   new_password: Joi.string().min(6).max(50).required().messages({

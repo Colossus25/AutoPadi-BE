@@ -10,6 +10,7 @@ import {
   JoinColumn
 } from "typeorm";
 import { Notification } from "@/modules/notifications/entities/notification.entity";
+import { UserRole } from "./user-role.entity";
 
 @Entity({ name: "users" })
 export class User {
@@ -25,11 +26,18 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ select: false })
-  password?: string;
+  @Column({ type: "varchar", nullable: true, select: false })
+  password?: string | null;
 
   @Column({ nullable: true })
   user_type?: string;
+
+  // Auth provider for this identity: "local" (email+password) or "google".
+  @Column({ nullable: true })
+  provider?: string;
+
+  @Column({ type: "varchar", nullable: true, unique: true })
+  google_id?: string | null;
 
   @Column({ nullable: true })
   phone: string;
@@ -79,4 +87,7 @@ export class User {
   @OneToMany(() => Notification, (r) => r.user)
   @JoinColumn({ name: "user_id" })
   notifications: Notification[];
+
+  @OneToMany(() => UserRole, (r) => r.user)
+  roles?: UserRole[];
 }

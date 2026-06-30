@@ -22,6 +22,12 @@ export const appConfig = {
   BCRYPT_SALT: process.env.BCRYPT_SALT,
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   JWT_SECRET: process.env.JWT_SECRET,
+
+  // Google OAuth client IDs accepted as ID-token audiences (one per platform).
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_IOS_CLIENT_ID: process.env.GOOGLE_IOS_CLIENT_ID,
+  GOOGLE_ANDROID_CLIENT_ID: process.env.GOOGLE_ANDROID_CLIENT_ID,
+
   COOKIE_SECRET: process.env.COOKIE_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,

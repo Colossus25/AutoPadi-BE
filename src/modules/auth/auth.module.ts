@@ -8,12 +8,14 @@ import {
   UsersController,
 } from "./controllers";
 import { User } from "./entities/user.entity";
+import { UserRole } from "./entities/user-role.entity";
 import { AuthService } from "./services/auth.service";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
+      UserRole,
       PersonalAccessToken,
     ]),
     EventEmitterModule.forRoot(),
