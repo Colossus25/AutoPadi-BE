@@ -5,6 +5,7 @@ import { JoiValidationPipe } from "@/pipes/joi.validation.pipe";
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Post,
   Req,
@@ -21,7 +22,6 @@ import {
   LoginDto,
   ResetPasswordDto,
   RoleDto,
-  GoogleAuthDto,
 } from "../dto";
 import { AuthService } from "../services/auth.service";
 import { UserLoginGuard } from "../user-guards";
@@ -33,7 +33,6 @@ import {
   LoginValidation,
   ResetPasswordValidation,
   RoleValidation,
-  GoogleAuthValidation,
 } from "../validations";
 
 @ApiTags("Authentication")
@@ -116,28 +115,30 @@ export class AuthController {
     };
   }
 
-  @Post("google")
-  @UsePipes(new JoiValidationPipe(GoogleAuthValidation))
-  async googleAuth(
-    @Body() body: GoogleAuthDto,
-    @Res({ passthrough: true }) res: Response
+  // Step 1: kick off Google sign-in. The app opens this URL in a browser tab.
+  // ?userType=<role> is optional (for signup).
+  @Get("google")
+  @ApiQuery({ name: "userType", required: false })
+  googleStart(@Query("userType") userType: string, @Res() res: Response) {
+    const url = this.authService.buildGoogleAuthUrl(userType);
+    return res.redirect(url);
+  }
+
+  // Step 2: Google redirects here; we finish auth and redirect back to the
+  // client (deep link for mobile, web URL for web) carrying ?token=<jwt>.
+  @Get("google/callback")
+  async googleCallback(
+    @Query("code") code: string,
+    @Query("state") state: string,
+    @Query("error") error: string,
+    @Res() res: Response
   ) {
-    res.clearCookie(_AUTH_COOKIE_NAME_);
-
-    const { message, data } = await this.authService.googleAuth(
-      body.idToken,
-      body.userType
-    );
-    const { user, token } = data;
-
-    const cookieData = { token, user: extractUserForCookie(user) };
-    res.cookie(
-      _AUTH_COOKIE_NAME_,
-      encodeURIComponent(JSON.stringify(cookieData)),
-      CookieOptions
-    );
-
-    return { message, data };
+    const redirectUrl = await this.authService.handleGoogleCallback({
+      code,
+      state,
+      error,
+    });
+    return res.redirect(redirectUrl);
   }
 
   @Post("forgot-password")

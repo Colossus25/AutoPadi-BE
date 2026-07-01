@@ -33,8 +33,9 @@ export const ConfigModuleSchema = Joi.object({
   FIREBASE_SERVICE_ACCOUNT: Joi.string().allow(null, "").optional(),
   // Optional so the app still boots before Google sign-in is configured
   GOOGLE_CLIENT_ID: Joi.string().allow(null, "").optional(),
-  GOOGLE_IOS_CLIENT_ID: Joi.string().allow(null, "").optional(),
-  GOOGLE_ANDROID_CLIENT_ID: Joi.string().allow(null, "").optional(),
+  GOOGLE_CLIENT_SECRET: Joi.string().allow(null, "").optional(),
+  GOOGLE_CALLBACK_URL: Joi.string().allow(null, "").optional(),
+  GOOGLE_MOBILE_REDIRECT: Joi.string().allow(null, "").optional(),
   // REDIS_HOST: Joi.string().required(),
   // REDIS_PORT: Joi.string().allow(null, ""),
   // REDIS_PASSWORD: Joi.string().allow(null, ""),

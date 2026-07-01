@@ -23,10 +23,12 @@ export const appConfig = {
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   JWT_SECRET: process.env.JWT_SECRET,
 
-  // Google OAuth client IDs accepted as ID-token audiences (one per platform).
+  // Google OAuth (server-side redirect flow).
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  GOOGLE_IOS_CLIENT_ID: process.env.GOOGLE_IOS_CLIENT_ID,
-  GOOGLE_ANDROID_CLIENT_ID: process.env.GOOGLE_ANDROID_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+  // App deep link the backend redirects to (with ?token=) after Google sign-in.
+  GOOGLE_MOBILE_REDIRECT: process.env.GOOGLE_MOBILE_REDIRECT,
 
   COOKIE_SECRET: process.env.COOKIE_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,

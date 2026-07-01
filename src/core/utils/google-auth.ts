@@ -14,36 +14,58 @@ export interface GoogleProfile {
   sub: string;
 }
 
-let client: OAuth2Client | null = null;
-
-// All configured per-platform client IDs are accepted as valid audiences.
-function getAudiences(): string[] {
-  return [
-    appConfig.GOOGLE_CLIENT_ID,
-    appConfig.GOOGLE_IOS_CLIENT_ID,
-    appConfig.GOOGLE_ANDROID_CLIENT_ID,
-  ].filter(Boolean) as string[];
+// Server-side OAuth client (holds the client secret). Used for the redirect
+// flow: we build the consent URL and exchange the returned code ourselves.
+function getClient(): OAuth2Client {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL } =
+    appConfig;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_CALLBACK_URL)
+    throw new ServiceUnavailableException(
+      "Google sign-in is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALLBACK_URL."
+    );
+  return new OAuth2Client({
+    clientId: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    redirectUri: GOOGLE_CALLBACK_URL,
+  });
 }
 
-export async function verifyGoogleIdToken(
-  idToken: string
-): Promise<GoogleProfile> {
-  const audience = getAudiences();
-  if (!audience.length)
-    throw new ServiceUnavailableException(
-      "Google sign-in is not configured. Set GOOGLE_CLIENT_ID."
-    );
+// Step 1 — the Google consent URL we redirect the user's browser to.
+export function getGoogleAuthUrl(state: string): string {
+  return getClient().generateAuthUrl({
+    access_type: "online",
+    scope: ["openid", "email", "profile"],
+    prompt: "select_account",
+    state,
+  });
+}
 
-  if (!client) client = new OAuth2Client();
+// Step 2 — exchange the authorization code for the user's verified profile.
+export async function exchangeGoogleCode(code: string): Promise<GoogleProfile> {
+  const client = getClient();
+
+  let idToken: string | undefined;
+  try {
+    const { tokens } = await client.getToken(code);
+    idToken = tokens.id_token ?? undefined;
+  } catch {
+    throw new UnauthorizedException(
+      "Could not exchange Google authorization code."
+    );
+  }
+  if (!idToken)
+    throw new UnauthorizedException("Google did not return an ID token.");
 
   let payload;
   try {
-    const ticket = await client.verifyIdToken({ idToken, audience });
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: appConfig.GOOGLE_CLIENT_ID as string,
+    });
     payload = ticket.getPayload();
   } catch {
-    throw new UnauthorizedException("Invalid or expired Google token.");
+    throw new UnauthorizedException("Invalid Google ID token.");
   }
-
   if (!payload || !payload.email)
     throw new UnauthorizedException("Google token did not contain an email.");
 

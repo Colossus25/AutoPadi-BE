@@ -8,18 +8,21 @@ import {
   hashResource,
   hashResourceSync,
   verifyHash,
-  verifyGoogleIdToken,
+  getGoogleAuthUrl,
+  exchangeGoogleCode,
   EmailService,
+  type GoogleProfile,
 } from "@/core/utils";
 import { type UserRequest } from "@/definitions";
 import { BaseService } from "@/modules/base.service";
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotAcceptableException,
+  ServiceUnavailableException,
   UnauthorizedException,
-  UnprocessableEntityException,
 } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { NotificationEvent } from "@/modules/notifications/notification-events";
@@ -95,11 +98,7 @@ export class AuthService extends BaseService {
         (role) => role.user_type === userType
       );
       if (alreadyHasRole)
-        throw new UnprocessableEntityException("Validation failed", {
-          cause: [
-            { name: "userType", message: `You already have a ${userType} account.` },
-          ],
-        });
+        throw new ConflictException(`You already have a ${userType} account.`);
 
       await this.userRoleRepository.save({
         user_id: existingUser.id,
@@ -320,11 +319,7 @@ export class AuthService extends BaseService {
       where: { user_id: userId, user_type: userType },
     });
     if (existing)
-      throw new UnprocessableEntityException("Validation failed", {
-        cause: [
-          { name: "userType", message: `You already have a ${userType} account.` },
-        ],
-      });
+      throw new ConflictException(`You already have a ${userType} account.`);
 
     await this.userRoleRepository.save({ user_id: userId, user_type: userType });
 
@@ -357,11 +352,10 @@ export class AuthService extends BaseService {
     };
   }
 
-  // Sign up or sign in with a Google ID token (verified client-side via the
-  // Google SDK). One endpoint: find-or-create the identity, then ensure/activate
-  // the requested role. userType defaults to "buyer" for brand-new accounts.
-  async googleAuth(idToken: string, userType?: string) {
-    const profile = await verifyGoogleIdToken(idToken);
+  // Find-or-create the identity from a verified Google profile, then
+  // ensure/activate the requested role. userType defaults to "buyer" for
+  // brand-new accounts. Returns the same shape as login.
+  async googleAuth(profile: GoogleProfile, userType?: string) {
     if (!profile.email_verified)
       throw new UnauthorizedException(
         "Your Google email is not verified, please use a verified Google account."
@@ -458,5 +452,79 @@ export class AuthService extends BaseService {
       message: "Login successful.",
       data: { user: userWithRoles, token },
     };
+  }
+
+  private readonly googleUserTypes = [
+    "buyer",
+    "auto dealer",
+    "service provider",
+    "driver",
+    "driver employer",
+  ];
+
+  // Step 1: build the Google consent URL. The chosen role is carried through a
+  // signed, short-lived `state` (also our CSRF protection).
+  buildGoogleAuthUrl(userType?: string): string {
+    if (userType && !this.googleUserTypes.includes(userType))
+      throw new BadRequestException("Invalid user type.");
+
+    const state = this.jwtService.sign(
+      { typ: "oauth_state", userType: userType ?? null },
+      { expiresIn: "10m" }
+    );
+    return getGoogleAuthUrl(state);
+  }
+
+  // Step 2: Google redirects back here. Verify state, exchange the code,
+  // find-or-create the user, and return the app deep link carrying the JWT.
+  async handleGoogleCallback(params: {
+    code?: string;
+    state?: string;
+    error?: string;
+  }): Promise<string> {
+    try {
+      if (!params.state) throw new UnauthorizedException("Missing state.");
+
+      let decoded: { typ?: string; userType?: string | null };
+      try {
+        decoded = this.jwtService.verify(params.state);
+      } catch {
+        throw new UnauthorizedException("Invalid or expired sign-in state.");
+      }
+      if (decoded?.typ !== "oauth_state")
+        throw new UnauthorizedException("Invalid sign-in state.");
+
+      if (params.error) throw new UnauthorizedException(params.error);
+      if (!params.code)
+        throw new UnauthorizedException("Missing authorization code.");
+
+      const profile = await exchangeGoogleCode(params.code);
+      const { data } = await this.googleAuth(
+        profile,
+        decoded.userType ?? undefined
+      );
+      return this.buildGoogleClientRedirect({ token: data.token });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Google sign-in failed.";
+      return this.buildGoogleClientRedirect({ error: message });
+    }
+  }
+
+  private buildGoogleClientRedirect(params: {
+    token?: string;
+    error?: string;
+  }): string {
+    const base = appConfig.GOOGLE_MOBILE_REDIRECT;
+    if (!base)
+      throw new ServiceUnavailableException(
+        "App redirect URL (GOOGLE_MOBILE_REDIRECT) is not configured."
+      );
+
+    const sep = base.includes("?") ? "&" : "?";
+    const query = params.token
+      ? `token=${encodeURIComponent(params.token)}`
+      : `error=${encodeURIComponent(params.error ?? "google_signin_failed")}`;
+    return `${base}${sep}${query}`;
   }
 }
