@@ -65,6 +65,7 @@ export function extractUserForCookie(user: any) {
       city: user.city,
       state: user.state,
       proof_of_address_image: user.proof_of_address_image,
+      provider: user.provider,
       email_verified_at: user.email_verified_at,
       deleted_at: user.deleted_at,
       created_at: user.created_at,

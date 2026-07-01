@@ -32,6 +32,7 @@ export class UserLoginGuard implements CanActivate {
         'city',
         'state',
         'proof_of_address_image',
+        'provider',
         'email_verified_at',
         'deleted_at',
         'created_at',

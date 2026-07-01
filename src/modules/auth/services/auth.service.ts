@@ -137,6 +137,7 @@ export class AuthService extends BaseService {
         email: normalizedEmail,
         password: hashResourceSync(password),
         user_type: userType,
+        provider: "local",
         remember_token: rememberToken,
       });
 
@@ -165,6 +166,7 @@ export class AuthService extends BaseService {
         state: user.state,
         proof_of_address_image: user.proof_of_address_image,
         profile_picture: user.profile_picture,
+        provider: user.provider,
         remember_token: user.remember_token,
         roles,
       };
