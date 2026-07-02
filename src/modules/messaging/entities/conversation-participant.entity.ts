@@ -22,6 +22,12 @@ export class ConversationParticipant {
   @Column('integer')
   user_id: number;
 
+  // The role this participant is acting in for this conversation (e.g. "buyer",
+  // "auto dealer"). NULL = unscoped (shows in every mode). Lets a multi-role
+  // user's inbox be filtered to their active role.
+  @Column({ type: 'varchar', nullable: true })
+  role: string | null;
+
   @CreateDateColumn()
   joined_at: Date;
 

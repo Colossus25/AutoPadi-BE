@@ -34,8 +34,13 @@ export class AuthGuard implements CanActivate {
       // 3️⃣ Verify the token
       const payload = await this.jwtService.verifyAsync(token, { secret: appConfig.JWT_SECRET });
 
-      // 4️⃣ Attach payload + user info to request
-      req.user = user || payload;
+      // 4️⃣ Attach the verified identity to the request.
+      // The token payload is the only cryptographically verified source of
+      // identity and always carries `id`. The cookie's `user` blob is
+      // client-controlled and may be stale or partial — a blob missing `id`
+      // is what made downstream inserts (e.g. payments.user_id) write NULL —
+      // so let the verified payload win and never trust the raw cookie for identity.
+      req.user = { ...(user ?? {}), ...payload };
       return true;
     } catch (err) {
       res.clearCookie(_AUTH_COOKIE_NAME_);

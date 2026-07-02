@@ -126,7 +126,13 @@ export class BookingService {
       throw new NotFoundException('Booking not found');
     }
 
-    return booking;
+    // A booking only stores its own estimated_cost when the buyer supplied one.
+    // When it didn't, fall back to the service's price so the client always has
+    // a figure to display. (`??` keeps a real 0 from being overwritten.)
+    return {
+      ...booking,
+      estimated_cost: booking.estimated_cost ?? booking.service?.estimated_cost ?? null,
+    };
   }
 
   async updateBookingStatus(id: number, dto: UpdateBookingStatusDto, user: User) {

@@ -54,6 +54,20 @@ export class AuthService extends BaseService {
     super();
   }
 
+  // The JWT lives inside the auth cookie, and nginx rejects any upstream
+  // response whose header block exceeds its proxy buffer ("upstream sent too
+  // big header" -> 502). The large `text` columns (document/photo URLs) have no
+  // business in a token, so strip them before signing. Anything that needs them
+  // re-fetches the user by id.
+  private signUserToken<T extends object>(payload: T): string {
+    const claims = { ...payload } as Record<string, unknown>;
+    delete claims.id_image;
+    delete claims.proof_of_address_image;
+    delete claims.profile_picture;
+    delete claims.password;
+    return this.jwtService.sign(claims);
+  }
+
   async login(loginDto: LoginDto, req: UserRequest) {
     const { user } = req;
     const verified = await verifyHash(loginDto.password, user.password);
@@ -69,7 +83,7 @@ export class AuthService extends BaseService {
 
     const roles = await this.listRoles(user.id);
     const userWithRoles = { ...user, roles };
-    const token = this.jwtService.sign({ ...userWithRoles });
+    const token = this.signUserToken(userWithRoles);
 
     return { message: "Login successful.", user: userWithRoles, token };
   }
@@ -119,7 +133,7 @@ export class AuthService extends BaseService {
         ])
       );
       const user = { ...existingUser, user_type: userType, roles };
-      const token = this.jwtService.sign({ ...user });
+      const token = this.signUserToken(user);
 
       return {
         message: `Your ${userType} account has been added.`,
@@ -149,7 +163,7 @@ export class AuthService extends BaseService {
       await queryRunner.commitTransaction();
 
       const roles = [userType];
-      const token = this.jwtService.sign({ ...user, roles });
+      const token = this.signUserToken({ ...user, roles });
 
       const userData = {
         first_name: user.first_name,
@@ -346,7 +360,7 @@ export class AuthService extends BaseService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     const roles = await this.listRoles(userId);
     const userWithRoles = { ...user, roles };
-    const token = this.jwtService.sign({ ...userWithRoles });
+    const token = this.signUserToken(userWithRoles);
 
     return {
       message: `Switched to your ${userType} account.`,
@@ -408,7 +422,7 @@ export class AuthService extends BaseService {
 
       const roles = [role];
       const userWithRoles = { ...user, password: undefined, roles };
-      const token = this.jwtService.sign({ ...userWithRoles });
+      const token = this.signUserToken(userWithRoles);
 
       return {
         message: "Account created with Google.",
@@ -448,7 +462,7 @@ export class AuthService extends BaseService {
       password: undefined,
       roles,
     };
-    const token = this.jwtService.sign({ ...userWithRoles });
+    const token = this.signUserToken(userWithRoles);
 
     return {
       message: "Login successful.",

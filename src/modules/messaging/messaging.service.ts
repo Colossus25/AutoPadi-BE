@@ -73,7 +73,14 @@ export class MessagingService {
     // conversation below with an explicit ORDER BY.
     const [conversations, total] = await this.conversationRepository
       .createQueryBuilder('c')
-      .innerJoin('c.participants', 'p', 'p.user_id = :userId', { userId: user.id })
+      // Scope to the viewer's active role: conversations where they participate
+      // as that role, plus unscoped (role IS NULL) ones which show in any mode.
+      .innerJoin(
+        'c.participants',
+        'p',
+        'p.user_id = :userId AND (p.role = :activeRole OR p.role IS NULL)',
+        { userId: user.id, activeRole: user.user_type ?? '' },
+      )
       .leftJoinAndSelect('c.participants', 'allParticipants')
       .leftJoinAndSelect('allParticipants.user', 'u')
       .orderBy('c.updated_at', 'DESC')
@@ -240,16 +247,25 @@ export class MessagingService {
       conversation,
     );
 
+    // Record the role each side is acting in so inboxes can be scoped to the
+    // viewer's active role.
+    const { creatorRole, otherRole } = this.participantRolesForContext(
+      context_type || ConversationContextType.GENERAL,
+      user.user_type,
+    );
+
     // Add both participants
     await this.participantRepository.save([
       {
         conversation_id: savedConversation.id,
         user_id: user.id,
+        role: creatorRole,
         joined_at: new Date(),
       } as ConversationParticipant,
       {
         conversation_id: savedConversation.id,
         user_id: other_user_id,
+        role: otherRole,
         joined_at: new Date(),
       } as ConversationParticipant,
     ]);
@@ -264,6 +280,27 @@ export class MessagingService {
     }
 
     return result;
+  }
+
+  // Maps a conversation context to the role each side is acting in, based on the
+  // creator's active role. Returns nulls for general/unknown contexts (or when
+  // the creator's role isn't part of the context pair) — those stay unscoped and
+  // show in every mode.
+  private participantRolesForContext(
+    contextType: ConversationContextType,
+    creatorActiveRole?: string,
+  ): { creatorRole: string | null; otherRole: string | null } {
+    const pairs: Partial<Record<ConversationContextType, [string, string]>> = {
+      [ConversationContextType.PRODUCT_INQUIRY]: ['buyer', 'auto dealer'],
+      [ConversationContextType.BOOKING]: ['buyer', 'service provider'],
+      [ConversationContextType.DRIVER_JOB]: ['driver', 'driver employer'],
+    };
+    const pair = pairs[contextType];
+    if (pair && creatorActiveRole && pair.includes(creatorActiveRole)) {
+      const otherRole = pair[0] === creatorActiveRole ? pair[1] : pair[0];
+      return { creatorRole: creatorActiveRole, otherRole };
+    }
+    return { creatorRole: null, otherRole: null };
   }
 
   /**
@@ -468,6 +505,11 @@ export class MessagingService {
       .innerJoin('m.conversation', 'c')
       .innerJoin('c.participants', 'p')
       .where('p.user_id = :userId', { userId: user.id })
+      // Only count unread in conversations belonging to the active role (or
+      // unscoped ones), so the badge matches the scoped inbox.
+      .andWhere('(p.role = :activeRole OR p.role IS NULL)', {
+        activeRole: user.user_type ?? '',
+      })
       .andWhere('m.sender_id != :userId', { userId: user.id })
       .andWhere('m.is_read = false')
       .andWhere('m.deleted_at IS NULL')
