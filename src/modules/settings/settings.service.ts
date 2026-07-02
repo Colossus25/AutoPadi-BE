@@ -33,13 +33,17 @@ export class SettingsService {
 
     const user = await this.userRepository.findOne({
       where: { id: userId },
+      relations: { roles: true },
     });
 
     if (!user) {
       throw new BadRequestException("User not found.");
     }
 
-    return { user };
+    // Return roles as a flat string array, consistent with the auth responses.
+    const roles = user.roles?.map((role) => role.user_type) ?? [];
+
+    return { user: { ...user, roles } };
   }
 
   async editProfile(
