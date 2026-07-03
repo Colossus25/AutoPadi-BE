@@ -20,6 +20,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotAcceptableException,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -53,6 +54,8 @@ export class AuthService extends BaseService {
   ) {
     super();
   }
+
+  private readonly logger = new Logger(AuthService.name);
 
   // The JWT lives inside the auth cookie, and nginx rejects any upstream
   // response whose header block exceeds its proxy buffer ("upstream sent too
@@ -185,15 +188,19 @@ export class AuthService extends BaseService {
         roles,
       };
 
-      await new EmailService(
-        { email },
-        rememberToken,
-      ).sendWelcomeEmail();
-
-      await new EmailService(
-        { email },
-        rememberToken,
-      ).sendVerifyEmail();
+      // Fire-and-forget: broken/slow SMTP must never block or fail signup. If
+      // the verify code doesn't arrive it can be re-sent via
+      // /auth/resend-verify-email.
+      new EmailService({ email }, rememberToken)
+        .sendWelcomeEmail()
+        .catch((e) =>
+          this.logger.error(`Welcome email failed for ${email}: ${e?.message ?? e}`)
+        );
+      new EmailService({ email }, rememberToken)
+        .sendVerifyEmail()
+        .catch((e) =>
+          this.logger.error(`Verify email failed for ${email}: ${e?.message ?? e}`)
+        );
 
       const data = {
         user: userData,
@@ -418,7 +425,15 @@ export class AuthService extends BaseService {
         await queryRunner.release();
       }
 
-      await new EmailService({ email }, "").sendWelcomeEmail();
+      // Fire-and-forget: a slow or broken SMTP must never block the sign-in
+      // redirect (the account is already created and committed above).
+      new EmailService({ email }, "")
+        .sendWelcomeEmail()
+        .catch((e) =>
+          this.logger.error(
+            `Google created account welcome email failed for ${email}: ${e?.message ?? e}`
+          )
+        );
 
       const roles = [role];
       const userWithRoles = { ...user, password: undefined, roles };
@@ -523,6 +538,10 @@ export class AuthService extends BaseService {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Google sign-in failed.";
+      this.logger.error(
+        `Google callback failed: ${message}`,
+        err instanceof Error ? err.stack : undefined
+      );
       return this.buildGoogleClientRedirect({ error: message });
     }
   }
