@@ -22,10 +22,11 @@ export class JoiValidationPipe implements PipeTransform {
         name: detail.context?.key,
         message: detail.message.replace(/"/g, ""),
       }));
-      throw new UnprocessableEntityException("Validation failed.", {
-        cause,
-        description: error.message,
-      });
+      // Surface the actual validation text as the top-level `message` (a plain
+      // string the client can show directly), while keeping the per-field
+      // breakdown in `errors`. Multiple failures are joined into one string.
+      const message = cause.map((c) => c.message).join(", ");
+      throw new UnprocessableEntityException(message, { cause });
     }
     return value;
   }
