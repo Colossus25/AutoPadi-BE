@@ -346,9 +346,14 @@ export class AuthService extends BaseService {
 
     await this.userRoleRepository.save({ user_id: userId, user_type: userType });
 
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const roles = await this.listRoles(userId);
+    const userWithRoles = { ...user, roles };
+    const token = this.signUserToken(userWithRoles);
+
     return {
       message: `Your ${userType} account has been added.`,
-      data: { roles: await this.listRoles(userId) },
+      data: { user: userWithRoles, token, roles },
     };
   }
 

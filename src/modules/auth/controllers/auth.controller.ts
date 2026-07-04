@@ -174,8 +174,27 @@ export class AuthController {
   @Post("roles")
   @UseGuards(AuthGuard)
   @UsePipes(new JoiValidationPipe(RoleValidation))
-  async addRole(@Body() body: RoleDto, @Req() req: UserRequest) {
-    return await this.authService.addRole(req.user.id, body.userType);
+  async addRole(
+    @Body() body: RoleDto,
+    @Req() req: UserRequest,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    res.clearCookie(_AUTH_COOKIE_NAME_);
+
+    const { message, data } = await this.authService.addRole(
+      req.user.id,
+      body.userType
+    );
+    const { user, token } = data;
+
+    const cookieData = { token, user: extractUserForCookie(user) };
+    res.cookie(
+      _AUTH_COOKIE_NAME_,
+      encodeURIComponent(JSON.stringify(cookieData)),
+      CookieOptions
+    );
+
+    return { message, data };
   }
 
   @Post("switch-role")
