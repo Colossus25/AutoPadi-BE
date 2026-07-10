@@ -5,22 +5,26 @@ services:
     # Matches the Supabase project's region (aws us-east-1). Keep these two
     # together — every request makes several round trips to Postgres.
     region: virginia
-    plan: starter
+
+    # Free instances sleep after ~15 min without inbound traffic. A sleeping
+    # process runs no cron, so the 2AM/3AM renewal jobs in
+    # subscription-renewal.service.ts will NOT fire unless something keeps this
+    # awake. They also hold no distributed lock, so never scale past one
+    # instance — CacheModule and socket.io rooms are in-process too.
+    plan: free
     branch: main
 
     # --include=dev is load-bearing. Render sets NODE_ENV=production, which
     # would otherwise skip devDependencies and leave `nest` (from @nestjs/cli)
     # missing at build time.
     buildCommand: npm ci --include=dev && npm run build
-    preDeployCommand: npm run db:migration-up:prod
-    startCommand: npm run prod
+
+    # preDeployCommand is a paid-tier feature and is ignored on free, so
+    # migrations run here instead. migration:run is idempotent; it costs two
+    # queries on a cold start when nothing is pending.
+    startCommand: npm run db:migration-up:prod && npm run prod
 
     healthCheckPath: /api/health
-
-    # The two @Cron jobs in subscription-renewal.service.ts have no distributed
-    # lock, and CacheModule + socket.io both hold state in-process. Raising this
-    # double-charges renewals and breaks websocket rooms.
-    numInstances: 1
 
     envVars:
       - key: NODE_VERSION
