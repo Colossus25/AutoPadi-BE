@@ -97,7 +97,9 @@ async function bootstrap() {
     new HttpExceptionFilter(),
     new GlobalExceptionFilter(httpAdapterHost)
   );
-  await app.listen(appConfig.PORT);
+  // Render routes traffic to the port it injects, and only to a process bound
+  // on all interfaces.
+  await app.listen(appConfig.PORT, "0.0.0.0");
 
   console.info(`Application is running on: ${await app.getUrl()}`);
 }

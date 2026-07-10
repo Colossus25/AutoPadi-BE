@@ -38,6 +38,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:migration-create": "npx ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:generate -d src/config/typeorm.config.ts ./src/db/migrations/${migrationName}",
     "db:migration-up": "npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
+    "db:migration-up:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/config/typeorm.config.js",
     "db:migration-down": "npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d src/config/typeorm.config.ts",
     "db:migration-fresh": "npm run db:migration-down && npm run db:migration-up",
     "seed:run": "node ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./dist/config/typeorm.config.js",

@@ -1,4 +1,3 @@
-import { BullModule } from "@nestjs/bull";
 import { CacheModule } from "@nestjs/cache-manager";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
@@ -7,7 +6,6 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
-// import * as redisStore from "cache-manager-redis-store";
 import { appConfig, dataSource } from "./config";
 import { _IS_PROD_ } from "./constants";
 // import { SentryModule } from '@sentry/nestjs/setup';
@@ -51,20 +49,12 @@ import { AdminModule } from "./modules/admin/admin.module";
       validationOptions: { abortEarly: true },
     }),
     ScheduleModule.forRoot(),
-    BullModule.forRoot({
-      redis: {
-        // host: appConfig.REDIS_HOST,
-        // port: appConfig.REDIS_PORT,
-        // password: appConfig.REDIS_PASSWORD,
-      },
-    }),
+    // In-memory store, so it is per-process. Moving to more than one Render
+    // instance means switching this to a shared Redis store.
     CacheModule.register({
       ttl: 60 * 20,
       isGlobal: true,
       max: 5000,
-      // store: redisStore,
-      // host: appConfig.REDIS_HOST,
-      // port: appConfig.REDIS_PORT,
     }),
     AuthModule,
     PersonalAccessTokenModule,

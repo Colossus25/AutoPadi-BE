@@ -8,10 +8,9 @@ export const dataSource = {
   username: dbConfig.DB_USERNAME,
   password: dbConfig.DB_PASSWORD,
   database: dbConfig.DB_NAME,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-  // url: dbConfig.DB_URL,
+  // Supabase terminates TLS at the pooler with a cert Node does not ship a root
+  // for, so verification is off while transport stays encrypted.
+  ssl: dbConfig.DB_SSL ? { rejectUnauthorized: false } : false,
   synchronize: false,
   timezone: "UTC+1", //'+01:00'
   logging: false,

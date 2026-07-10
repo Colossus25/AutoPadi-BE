@@ -12,6 +12,7 @@ export const ConfigModuleSchema = Joi.object({
   DB_USERNAME: Joi.string(),
   DB_PASSWORD: Joi.string(),
   DB_NAME: Joi.string(),
+  DB_SSL: Joi.boolean().default(false),
   ENV: Joi.string()
     .valid("dev", "production", "test", "staging")
     .default("dev"),

@@ -1,0 +1,111 @@
+services:
+  - type: web
+    name: autopadi-be
+    runtime: node
+    # Matches the Supabase project's region (aws us-east-1). Keep these two
+    # together — every request makes several round trips to Postgres.
+    region: virginia
+    plan: starter
+    branch: main
+
+    # --include=dev is load-bearing. Render sets NODE_ENV=production, which
+    # would otherwise skip devDependencies and leave `nest` (from @nestjs/cli)
+    # missing at build time.
+    buildCommand: npm ci --include=dev && npm run build
+    preDeployCommand: npm run db:migration-up:prod
+    startCommand: npm run prod
+
+    healthCheckPath: /api/health
+
+    # The two @Cron jobs in subscription-renewal.service.ts have no distributed
+    # lock, and CacheModule + socket.io both hold state in-process. Raising this
+    # double-charges renewals and breaks websocket rooms.
+    numInstances: 1
+
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
+      - key: ENV
+        value: production
+      - key: DEBUG
+        value: false
+      # Makes the 2AM/3AM renewal crons fire at Lagos time, as they did on EC2.
+      # Render containers are UTC by default.
+      - key: TZ
+        value: Africa/Lagos
+
+      # Supabase requires TLS; see src/config/typeorm.config.ts.
+      - key: DB_SSL
+        value: true
+      - key: DB_PORT
+        value: 5432
+
+      # Set in the Render dashboard, not here.
+      - key: DB_HOST # aws-0-<region>.pooler.supabase.com
+        sync: false
+      - key: DB_USERNAME # postgres.<project-ref>  — NOT bare "postgres"
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME # postgres
+        sync: false
+
+      - key: APP_NAME
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: APP_FRONTEND
+        sync: false
+      - key: WEB_FRONTEND
+        sync: false
+      # Comma+space separated — main.ts splits on ", " exactly.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      - key: BCRYPT_SALT
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        sync: false
+      - key: COOKIE_SECRET
+        sync: false
+      - key: FILE_UPLOAD_PATH
+        sync: false
+      - key: SWAGGER_PASSWORD
+        sync: false
+
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASS
+        sync: false
+      - key: MAIL_EMAIL
+        sync: false
+
+      - key: CLOUDINARYNAME
+        sync: false
+      - key: CLOUDINARYAPIKEY
+        sync: false
+      - key: CLOUDINARYAPISECRET
+        sync: false
+
+      # Also keys the webhook HMAC — see paystack.service.ts verifyWebhookSignature.
+      # PAYSTACK_PUBLIC_KEY and PAYSTACK_WEBHOOK_SECRET are read by nothing.
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: GOOGLE_MOBILE_REDIRECT
+        sync: false
+
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false

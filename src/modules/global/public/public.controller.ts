@@ -12,6 +12,7 @@ import {
   UsePipes,
 } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
+import { SkipThrottle } from "@nestjs/throttler";
 import { Response } from "express";
 import { ConfirmUserEmailDto } from "./dto";
 import { PublicService } from "./public.service";
@@ -23,6 +24,14 @@ import {
 @Controller()
 export class PublicController {
   constructor(private readonly publicService: PublicService) {}
+
+  // Liveness only. Deliberately does not touch Postgres: a Supabase blip should
+  // not make Render tear down and replace a healthy process.
+  @SkipThrottle()
+  @Get("health")
+  health() {
+    return { status: "ok" };
+  }
 
   @UsePipes(new JoiValidationPipe(ConfirmUserEmailValidation))
   @Post("user/verify-email")
