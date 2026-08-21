@@ -51,8 +51,9 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: DB_NAME # postgres
-        sync: false
+      # Supabase always names the database "postgres" — never the old RDS name.
+      - key: DB_NAME
+        value: postgres
 
       - key: APP_NAME
         sync: false
@@ -77,6 +78,13 @@ services:
       - key: FILE_UPLOAD_PATH
         sync: false
       - key: SWAGGER_PASSWORD
+        sync: false
+
+      # Free instances can't send outbound SMTP (ports 25/465/587 blocked), so
+      # mailer.ts delivers over Brevo's HTTP API when this is set. Generate in
+      # Brevo dashboard → Settings → SMTP & API → API Keys ("xkeysib-…" — not
+      # the SMTP key). The MAIL_* vars below are the local-dev SMTP fallback.
+      - key: BREVO_API_KEY
         sync: false
 
       - key: MAIL_HOST

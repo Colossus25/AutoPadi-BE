@@ -229,17 +229,11 @@ export class SubscriptionNotificationService {
         subject,
       });
 
-      const emailService = new EmailService(user, '');
-      const transporter = emailService.newTransport();
-
-      const mailOptions = {
-        from: `AutoPadi <${process.env.MAIL_EMAIL}>`,
+      await EmailService.deliver({
         to: user.email,
         subject,
         html,
-      };
-
-      await transporter.sendMail(mailOptions);
+      });
       this.logger.log(`Email sent to ${user.email} with subject: ${subject}`);
     } catch (error) {
       this.logger.error(`Failed to send email: ${error.message}`);
