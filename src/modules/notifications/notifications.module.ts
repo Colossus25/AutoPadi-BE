@@ -4,6 +4,7 @@ import { User } from "../auth/entities/user.entity";
 import { DeviceToken } from "./entities/device-token.entity";
 import { NotificationJob } from "./entities/notification-jobs.entity";
 import { Notification } from "./entities/notification.entity";
+import { NotificationPreference } from "./entities/notification-preference.entity";
 import { FcmService } from "./fcm.service";
 import { NotificationsGateway } from "./notifications.gateway";
 import { NotificationsSubscriberService } from "./notifications-subscriber.service";
@@ -17,6 +18,7 @@ import { NotificationsService } from "./notifications.service";
       Notification,
       NotificationJob,
       DeviceToken,
+      NotificationPreference,
       User,
     ]),
   ],

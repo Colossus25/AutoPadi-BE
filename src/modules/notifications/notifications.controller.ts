@@ -8,15 +8,20 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiCookieAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { RegisterDeviceTokenDto } from './dto/create-notification.dto';
+import {
+  RegisterDeviceTokenDto,
+  UpdateNotificationPreferencesDto,
+} from './dto/create-notification.dto';
 import { NotificationsService } from './notifications.service';
 import { registerDeviceTokenValidation } from './validations/device-token.validation';
+import { updatePreferencesValidation } from './validations/preferences.validation';
 
 @ApiCookieAuth(_AUTH_COOKIE_NAME_)
 @ApiTags('Notifications')
@@ -43,6 +48,20 @@ export class NotificationsController {
   @Get('unread-count')
   async unreadCount(@Req() req: UserRequest) {
     return await this.notificationsService.unreadCount(req.user.id);
+  }
+
+  @Get('preferences')
+  async getPreferences(@Req() req: UserRequest) {
+    return await this.notificationsService.getPreferences(req.user.id);
+  }
+
+  @Patch('preferences')
+  async updatePreferences(
+    @Req() req: UserRequest,
+    @Body(new JoiValidationPipe(updatePreferencesValidation))
+    body: UpdateNotificationPreferencesDto,
+  ) {
+    return await this.notificationsService.updatePreferences(req.user.id, body);
   }
 
   @Get(':id')

@@ -7,6 +7,7 @@ import { User } from '@/modules/auth/entities/user.entity';
 import { UserSubscription, UserSubscriptionStatus } from '../entities/user-subscription.entity';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { EmailService } from '@/core/utils/mailer';
+import { NotificationsService } from '@/modules/notifications/notifications.service';
 import * as path from 'path';
 import * as pug from 'pug';
 
@@ -25,6 +26,7 @@ export class SubscriptionNotificationService {
     @InjectRepository(UserSubscription)
     private readonly userSubscriptionRepository: Repository<UserSubscription>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -222,6 +224,8 @@ export class SubscriptionNotificationService {
    */
   private async sendEmail(user: User, template: string, subject: string, data: Record<string, any>) {
     try {
+      if (!(await this.notificationsService.isEmailEnabled(user.id))) return;
+
       const templatePath = path.join(process.cwd(), 'views', `${template}.pug`);
 
       const html = pug.renderFile(templatePath, {

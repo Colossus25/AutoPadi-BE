@@ -8,6 +8,7 @@ import {
   CreateNotificationJobDto,
   NotifyDto,
   RegisterDeviceTokenDto,
+  UpdateNotificationPreferencesDto,
 } from "./dto/create-notification.dto";
 import { User } from "@/modules/auth/entities/user.entity";
 import {
@@ -16,11 +17,21 @@ import {
 } from "./entities/device-token.entity";
 import { NotificationJob } from "./entities/notification-jobs.entity";
 import { Notification } from "./entities/notification.entity";
+import { NotificationPreference } from "./entities/notification-preference.entity";
 import { FcmService } from "./fcm.service";
 import { NotificationsGateway } from "./notifications.gateway";
 
 // FCM allows at most 500 tokens per multicast request.
 const FCM_MULTICAST_LIMIT = 500;
+
+// Tags that count as marketing; gated by the user's `promotions_enabled`.
+export const PROMOTIONAL_TAGS = ["promotion", "announcement"];
+
+const DEFAULT_PREFERENCES = {
+  push_enabled: true,
+  email_enabled: true,
+  promotions_enabled: true,
+};
 
 @Injectable()
 export class NotificationsService {
@@ -34,6 +45,8 @@ export class NotificationsService {
     private readonly notificationJobRepository: Repository<NotificationJob>,
     @InjectRepository(DeviceToken)
     private readonly deviceTokenRepository: Repository<DeviceToken>,
+    @InjectRepository(NotificationPreference)
+    private readonly preferenceRepository: Repository<NotificationPreference>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>
   ) {}
@@ -164,6 +177,53 @@ export class NotificationsService {
     return { message: "All notifications marked as read" };
   }
 
+  async getPreferences(userId: number) {
+    const pref = await this.preferenceRepository.findOne({
+      where: { user_id: userId },
+    });
+    return {
+      push_enabled: pref?.push_enabled ?? DEFAULT_PREFERENCES.push_enabled,
+      email_enabled: pref?.email_enabled ?? DEFAULT_PREFERENCES.email_enabled,
+      promotions_enabled:
+        pref?.promotions_enabled ?? DEFAULT_PREFERENCES.promotions_enabled,
+    };
+  }
+
+  async updatePreferences(
+    userId: number,
+    dto: UpdateNotificationPreferencesDto
+  ) {
+    const { push_enabled, email_enabled, promotions_enabled } = dto;
+    const changes = { push_enabled, email_enabled, promotions_enabled };
+    Object.keys(changes).forEach(
+      (k) => changes[k] === undefined && delete changes[k]
+    );
+
+    await this.preferenceRepository.upsert(
+      { user_id: userId, ...changes },
+      ["user_id"]
+    );
+    return await this.getPreferences(userId);
+  }
+
+  /** True unless the user has switched email notifications off. */
+  async isEmailEnabled(userId: number) {
+    return (await this.getPreferences(userId)).email_enabled;
+  }
+
+  /** Ids (from `userIds`) that have switched off the given preference. */
+  private async usersWithDisabled(
+    userIds: number[],
+    column: "push_enabled" | "promotions_enabled"
+  ) {
+    if (userIds.length === 0) return new Set<number>();
+    const rows = await this.preferenceRepository.find({
+      select: { user_id: true },
+      where: { user_id: In(userIds), [column]: false },
+    });
+    return new Set(rows.map((r) => r.user_id));
+  }
+
   /**
    * Registers (or refreshes) an FCM device token for a user. A token is unique
    * across the system, so if it already exists it is reassigned to this user
@@ -209,6 +269,13 @@ export class NotificationsService {
   async notify(dto: NotifyDto, queryRunner?: QueryRunner) {
     const { userId, tag, title, body, data } = dto;
 
+    if (
+      PROMOTIONAL_TAGS.includes(tag) &&
+      !(await this.getPreferences(userId)).promotions_enabled
+    ) {
+      return;
+    }
+
     // 1. Persist the in-app notification.
     await this.create(
       { message: body, tag, userId, metadata: { title, ...data } },
@@ -228,6 +295,7 @@ export class NotificationsService {
     message: { title: string; body: string; data?: Record<string, string> }
   ) {
     if (!this.fcmService.isEnabled) return;
+    if (!(await this.getPreferences(userId)).push_enabled) return;
 
     const devices = await this.deviceTokenRepository.find({
       where: { user: { id: userId } },
@@ -245,7 +313,13 @@ export class NotificationsService {
   /**
    * Sends a notification to an explicit list of users (in-app + push to each).
    */
-  async notifyUsers(userIds: number[], dto: Omit<NotifyDto, "userId">) {
+  async notifyUsers(allUserIds: number[], dto: Omit<NotifyDto, "userId">) {
+    // Drop users who opted out of promotional messages.
+    const optedOut = PROMOTIONAL_TAGS.includes(dto.tag)
+      ? await this.usersWithDisabled(allUserIds, "promotions_enabled")
+      : new Set<number>();
+    const userIds = allUserIds.filter((id) => !optedOut.has(id));
+
     if (userIds.length === 0) return { recipients: 0 };
 
     // Persist one in-app notification per recipient.
@@ -304,8 +378,12 @@ export class NotificationsService {
   ) {
     if (!this.fcmService.isEnabled || userIds.length === 0) return;
 
+    const pushOff = await this.usersWithDisabled(userIds, "push_enabled");
+    const targets = userIds.filter((id) => !pushOff.has(id));
+    if (targets.length === 0) return;
+
     const devices = await this.deviceTokenRepository.find({
-      where: { user: { id: In(userIds) } },
+      where: { user: { id: In(targets) } },
     });
     const tokens = devices.map((d) => d.token);
     if (tokens.length === 0) return;

@@ -1,18 +1,13 @@
-import { Controller, Get, Req, Res, UseGuards, HttpStatus, Param, Query } from '@nestjs/common';
+import { Controller, Get, Res, HttpStatus, Param, Query } from '@nestjs/common';
 import { BannerService } from '@/modules/superadmin/service/banner.service';
-import { AuthGuard } from '@/guards';
-import { UserRequest } from '@/definitions';
 import { Response } from 'express';
-import { ApiTags, ApiCookieAuth } from '@nestjs/swagger';
-import { _AUTH_COOKIE_NAME_, DASHBOARD_CATEGORIES } from '@/constants';
+import { ApiTags } from '@nestjs/swagger';
+import { DASHBOARD_CATEGORIES } from '@/constants';
 import { DashboardService } from '../services/dashboard.service';
 import { SearchDto } from '../dto/search.dto';
 import { PaginationDto } from '@/modules/global/common/dto/pagination.dto';
 
-@ApiCookieAuth(_AUTH_COOKIE_NAME_)
-@UseGuards(AuthGuard)
 @ApiTags('Dashboard')
-@UseGuards(AuthGuard)
 @Controller('dashboard')
 export class DashboardController {
     constructor(

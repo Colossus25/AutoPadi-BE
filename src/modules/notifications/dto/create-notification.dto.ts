@@ -39,3 +39,14 @@ export class NotifyDto {
   body: string;
   data?: Record<string, string>;
 }
+
+export class UpdateNotificationPreferencesDto {
+  @ApiProperty({ required: false, example: true })
+  push_enabled?: boolean;
+
+  @ApiProperty({ required: false, example: true })
+  email_enabled?: boolean;
+
+  @ApiProperty({ required: false, example: true })
+  promotions_enabled?: boolean;
+}
