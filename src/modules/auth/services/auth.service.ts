@@ -40,6 +40,20 @@ import {
 import { User } from "../entities/user.entity";
 import { UserRole } from "../entities/user-role.entity";
 
+const ALL_USER_TYPES = [
+  "buyer",
+  "auto dealer",
+  "service provider",
+  "driver",
+  "driver employer",
+];
+
+// All roles, with the given one first so it sorts as the earliest-created.
+const allRolesStartingWith = (first: string) => [
+  first,
+  ...ALL_USER_TYPES.filter((type) => type !== first),
+];
+
 @Injectable()
 export class AuthService extends BaseService {
   constructor(
@@ -158,14 +172,15 @@ export class AuthService extends BaseService {
         remember_token: rememberToken,
       });
 
-      await queryRunner.manager.save(UserRole, {
-        user_id: user.id,
-        user_type: userType,
-      });
+      // Every account holds all roles; the requested one is active.
+      const roles = allRolesStartingWith(userType);
+      await queryRunner.manager.save(
+        UserRole,
+        roles.map((role) => ({ user_id: user.id, user_type: role }))
+      );
 
       await queryRunner.commitTransaction();
 
-      const roles = [userType];
       const token = this.signUserToken({ ...user, roles });
 
       const userData = {
@@ -416,10 +431,13 @@ export class AuthService extends BaseService {
           email_verified_at: new Date(),
           password: null,
         });
-        await queryRunner.manager.save(UserRole, {
-          user_id: user.id,
-          user_type: role,
-        });
+        await queryRunner.manager.save(
+          UserRole,
+          allRolesStartingWith(role).map((r) => ({
+            user_id: user.id,
+            user_type: r,
+          }))
+        );
         await queryRunner.commitTransaction();
       } catch (error) {
         if (queryRunner.isTransactionActive) {
@@ -440,7 +458,7 @@ export class AuthService extends BaseService {
           )
         );
 
-      const roles = [role];
+      const roles = allRolesStartingWith(role);
       const userWithRoles = { ...user, password: undefined, roles };
       const token = this.signUserToken(userWithRoles);
 
@@ -490,13 +508,7 @@ export class AuthService extends BaseService {
     };
   }
 
-  private readonly googleUserTypes = [
-    "buyer",
-    "auto dealer",
-    "service provider",
-    "driver",
-    "driver employer",
-  ];
+  private readonly googleUserTypes = ALL_USER_TYPES;
 
   // Step 1: build the Google consent URL. The chosen role is carried through a
   // signed, short-lived `state` (also our CSRF protection).
